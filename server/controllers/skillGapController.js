@@ -128,7 +128,7 @@ const getJobSkills = (job) => {
     // from long descriptions. They are still accepted when explicitly tagged
     // in the job's structured skills arrays above.
     if (skill.length < 3) continue;
-    const pattern = escapeRegex(skill).replace(/\\\s+/g, "\\\\s+");
+    const pattern = escapeRegex(skill).replace(/\s+/g, "\\s+");
     const matcher = new RegExp("(^|[^a-z0-9])" + pattern + "(?=$|[^a-z0-9])", "i");
     if (matcher.test(searchableText)) {
       const key = canonicalSkill(skill);
