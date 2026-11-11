@@ -1,26 +1,57 @@
 const Job = require("../models/Job");
 const User = require("../models/User");
 
+const MAX_JOBS_TO_ANALYSE = 500;
+
+// Generic job terms and ambiguous fragments are not useful standalone skills.
+// Specific technologies such as Apache Kafka and Apache Spark remain valid.
+const EXCLUDED_SKILL_TERMS = new Set([
+  "admin", "administrator", "administration", "sales",
+  "software engineering", "software development", "business",
+  "business development", "management", "leadership",
+  "communication", "teamwork", "problem solving", "customer service",
+  "customer support", "technical support", "operations", "marketing",
+  "recruitment", "human resources", "hr", "documentation",
+  "responsibilities", "requirements", "qualifications", "job description",
+  "apache",
+]);
+
 const clean = (value) => String(value ?? "").trim();
 
 const canonicalSkill = (value) => {
   const skill = clean(value).toLowerCase().replace(/\s+/g, " ");
   const aliases = {
-    "js": "javascript",
+    js: "javascript",
     "javascript es6": "javascript",
     "node.js": "nodejs",
     "node js": "nodejs",
     "react.js": "react",
-    "reactjs": "react",
+    reactjs: "react",
     "mongo db": "mongodb",
-    "mongo": "mongodb",
-    "postgres": "postgresql",
-    "ml": "machine learning",
+    mongo: "mongodb",
+    postgres: "postgresql",
+    ml: "machine learning",
     "artificial intelligence": "ai",
     "c sharp": "c#",
     "c plus plus": "c++",
+    "apache kafka": "kafka",
+    "apache spark": "spark",
+    "apache airflow": "airflow",
+    "apache hadoop": "hadoop",
+    "apache flink": "flink",
+    "apache maven": "maven",
+    "apache tomcat": "tomcat",
+    "apache http server": "apache http server",
   };
   return aliases[skill] || skill;
+};
+
+const isUsefulSkill = (value) => {
+  const key = canonicalSkill(value);
+  if (!key || key.length < 2 || EXCLUDED_SKILL_TERMS.has(key)) return false;
+  if (/^(?:[0-9]+|[a-z])$/.test(key)) return false;
+  if (key.split(" ").length > 5) return false;
+  return true;
 };
 
 const uniqueSkills = (values = []) => {
@@ -28,19 +59,19 @@ const uniqueSkills = (values = []) => {
   for (const value of values) {
     const display = clean(value);
     const key = canonicalSkill(display);
-    if (key && !result.has(key)) result.set(key, display);
+    if (isUsefulSkill(display) && !result.has(key)) result.set(key, display);
   }
   return result;
 };
 
-const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const escapeRegex = (value) => value.replace(/[.*+?^$()|[\]\\]/g, "\\$&");
 
 const getRoleRelevance = (job, role) => {
   const roleWords = clean(role).toLowerCase().split(/[^a-z0-9+#.]+/).filter((word) => word.length > 2);
   if (!roleWords.length) return 100;
 
   const title = clean(job.title).toLowerCase();
-  const context = `${title} ${clean(job.description)} ${clean(job.requirements)}`.toLowerCase();
+  const context = (title + " " + clean(job.description) + " " + clean(job.requirements)).toLowerCase();
   const titleMatches = roleWords.filter((word) => title.includes(word)).length;
   const contextMatches = roleWords.filter((word) => context.includes(word)).length;
 
@@ -51,13 +82,34 @@ const getRoleRelevance = (job, role) => {
   ));
 };
 
+// A requirement signal only counts when it occurs close to the skill mention.
 const isExplicitlyRequired = (skill, job) => {
-  const requirementText = `${clean(job.requirements)} ${clean(job.description)} ${clean(job.qualifications)}`;
+  const requirementText = [
+    clean(job.requirements),
+    clean(job.qualifications),
+    clean(job.description),
+  ].filter(Boolean).join("\n");
   if (!requirementText) return false;
-  const skillPattern = new RegExp(`(^|[^a-z0-9+#])${escapeRegex(skill)}([^a-z0-9+#]|$)`, "i");
-  const requiredPattern = /\b(required|must[- ]have|mandatory|essential|proficient|strong knowledge of|experience with)\b/i;
-  return skillPattern.test(requirementText) && requiredPattern.test(requirementText);
+
+  const skillPattern = new RegExp(
+    "(^|[^a-z0-9+#])" + escapeRegex(skill) + "([^a-z0-9+#]|$)",
+    "ig"
+  );
+  const signalPattern = /\b(required|must[- ]have|mandatory|essential|proficient|strong knowledge of|experience with|experience in|knowledge of|familiarity with|hands-on experience)\b/i;
+
+  let match;
+  while ((match = skillPattern.exec(requirementText)) !== null) {
+    const start = Math.max(0, match.index - 75);
+    const end = Math.min(requirementText.length, match.index + match[0].length + 75);
+    if (signalPattern.test(requirementText.slice(start, end))) return true;
+  }
+  return false;
 };
+
+const getJobSkills = (job) => uniqueSkills([
+  ...(Array.isArray(job.skills) ? job.skills : []),
+  ...(Array.isArray(job.detectedJobSkills) ? job.detectedJobSkills : []),
+]);
 
 const getSkillGapOverview = async (req, res) => {
   try {
@@ -78,43 +130,36 @@ const getSkillGapOverview = async (req, res) => {
       ...(Array.isArray(user.resumeSkills) ? user.resumeSkills : []),
       ...(Array.isArray(user.skills) ? user.skills : []),
     ]);
-
     const role = clean(user.targetRole);
-    const cachedJobs = await Job.find({})
-      .select("title company description requirements qualifications skills detectedJobSkills location source scrapedAt")
-      .sort({ postedDate: -1, scrapedAt: -1 })
-      .limit(500)
-      .lean();
+
+    // Match the dashboard's exclusion of fabricated/legacy placeholder URLs.
+    const validJobQuery = {
+      $nor: [
+        { jobUrl: /jobpulse_id=/i },
+        { jobUrl: /linkedin\.com\/jobs\/search/i },
+      ],
+    };
+
+    const [cachedJobs, totalAvailableJobs] = await Promise.all([
+      Job.find(validJobQuery)
+        .select("title company description requirements qualifications skills detectedJobSkills location source scrapedAt jobUrl")
+        .sort({ postedDate: -1, scrapedAt: -1 })
+        .limit(MAX_JOBS_TO_ANALYSE)
+        .lean(),
+      Job.countDocuments(validJobQuery),
+    ]);
 
     const relevantJobs = cachedJobs
       .map((job) => ({ ...job, roleRelevance: getRoleRelevance(job, role) }))
       .filter((job) => !role || job.roleRelevance > 0);
 
     const skillStats = new Map();
-    const matchedSkillKeys = new Set();
-
     for (const job of relevantJobs) {
-      const jobSkills = uniqueSkills([
-        ...(Array.isArray(job.skills) ? job.skills : []),
-        ...(Array.isArray(job.detectedJobSkills) ? job.detectedJobSkills : []),
-      ]);
-
-      for (const [key, display] of jobSkills.entries()) {
-        if (profileSkills.has(key)) {
-          matchedSkillKeys.add(key);
-          continue;
-        }
-
+      for (const [key, display] of getJobSkills(job).entries()) {
+        if (profileSkills.has(key)) continue;
         if (!skillStats.has(key)) {
-          skillStats.set(key, {
-            key,
-            name: display,
-            jobCount: 0,
-            requiredCount: 0,
-            relevanceTotal: 0,
-          });
+          skillStats.set(key, { key, name: display, jobCount: 0, requiredCount: 0, relevanceTotal: 0 });
         }
-
         const stat = skillStats.get(key);
         stat.jobCount += 1;
         stat.relevanceTotal += job.roleRelevance;
@@ -124,11 +169,11 @@ const getSkillGapOverview = async (req, res) => {
 
     const maxDemand = Math.max(1, ...Array.from(skillStats.values()).map((item) => item.jobCount));
     const missingSkills = Array.from(skillStats.values()).map((item) => {
-      const demandScore = (item.jobCount / maxDemand) * 100;
-      const importanceScore = item.jobCount ? (item.requiredCount / item.jobCount) * 100 : 0;
-      const roleScore = item.jobCount ? item.relevanceTotal / item.jobCount : 0;
+      const demandScore = Math.round((item.jobCount / maxDemand) * 100);
+      const importanceScore = Math.round(item.jobCount ? (item.requiredCount / item.jobCount) * 100 : 0);
+      const roleRelevanceScore = Math.round(item.jobCount ? item.relevanceTotal / item.jobCount : 0);
       const priorityScore = Math.round(
-        demandScore * 0.5 + importanceScore * 0.3 + roleScore * 0.2
+        demandScore * 0.5 + importanceScore * 0.3 + roleRelevanceScore * 0.2
       );
 
       return {
@@ -137,19 +182,25 @@ const getSkillGapOverview = async (req, res) => {
         requiredCount: item.requiredCount,
         priorityScore,
         priority: priorityScore >= 65 ? "High" : priorityScore >= 35 ? "Medium" : "Low",
+        scoreBreakdown: {
+          demand: demandScore,
+          importance: importanceScore,
+          roleRelevance: roleRelevanceScore,
+          weights: { demand: 50, importance: 30, roleRelevance: 20 },
+        },
       };
-    }).sort((a, b) => b.priorityScore - a.priorityScore || b.jobCount - a.jobCount || a.name.localeCompare(b.name));
+    }).sort((a, b) =>
+      b.priorityScore - a.priorityScore ||
+      b.jobCount - a.jobCount ||
+      a.name.localeCompare(b.name)
+    );
 
     const allJobSkillKeys = new Set();
     let matchedOccurrences = 0;
     let totalOccurrences = 0;
 
     for (const job of relevantJobs) {
-      const jobSkills = uniqueSkills([
-        ...(Array.isArray(job.skills) ? job.skills : []),
-        ...(Array.isArray(job.detectedJobSkills) ? job.detectedJobSkills : []),
-      ]);
-      for (const key of jobSkills.keys()) {
+      for (const key of getJobSkills(job).keys()) {
         allJobSkillKeys.add(key);
         totalOccurrences += 1;
         if (profileSkills.has(key)) matchedOccurrences += 1;
@@ -159,7 +210,6 @@ const getSkillGapOverview = async (req, res) => {
     const matchedSkills = Array.from(allJobSkillKeys)
       .filter((key) => profileSkills.has(key))
       .map((key) => profileSkills.get(key));
-
     const coverage = totalOccurrences
       ? Math.round((matchedOccurrences / totalOccurrences) * 100)
       : 0;
@@ -173,10 +223,15 @@ const getSkillGapOverview = async (req, res) => {
       },
       summary: {
         jobsAnalysed: relevantJobs.length,
+        jobsScanned: cachedJobs.length,
+        totalAvailableJobs,
         matchedSkills: matchedSkills.length,
         missingSkills: missingSkills.length,
         highPrioritySkills: missingSkills.filter((skill) => skill.priority === "High").length,
         coverage,
+        matchedOccurrences,
+        totalSkillOccurrences: totalOccurrences,
+        missingOccurrences: totalOccurrences - matchedOccurrences,
       },
       matchedSkills,
       missingSkills,
