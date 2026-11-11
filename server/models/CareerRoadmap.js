@@ -23,7 +23,7 @@ const roadmapSkillSchema = new mongoose.Schema({
 }, { _id: true });
 
 const careerRoadmapSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, unique: true, index: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, unique: true },
   targetRole: { type: String, required: true, trim: true },
   sourceFingerprint: { type: String, default: "" },
   generatedAt: { type: Date, default: Date.now },
