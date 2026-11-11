@@ -189,10 +189,11 @@ function CareerRoadmap({ analysis }) {
                   <div className="roadmap-skill-content">
                     <div className="roadmap-skill-top">
                       <div className="roadmap-skill-title">
-                        <div className="roadmap-skill-labels">
-                          <span className={"roadmap-priority " + String(skill.priority || "Low").toLowerCase()}>{skill.priority || "Low"} priority</span>
-                          {skill.prerequisites && skill.prerequisites.length > 0 && <span className="roadmap-prerequisite">Prerequisites: {skill.prerequisites.join(", ")}</span>}
-                        </div>
+                        {skill.prerequisites && skill.prerequisites.length > 0 && (
+                          <div className="roadmap-skill-labels">
+                            <span className="roadmap-prerequisite">Prerequisites: {skill.prerequisites.join(", ")}</span>
+                          </div>
+                        )}
                         <h3>{skill.name}</h3>
                         {skill.reason && <p>{skill.reason}</p>}
                       </div>
