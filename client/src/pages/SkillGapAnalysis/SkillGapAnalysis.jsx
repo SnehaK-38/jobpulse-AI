@@ -95,7 +95,7 @@ function SkillGapAnalysis() {
                 <div>
                   <span>Role-related jobs analysed</span>
                   <strong>{summary.jobsAnalysed ?? 0}</strong>
-                  <small>{summary.jobsScanned ?? 0} of {summary.totalAvailableJobs ?? 0} available listings scanned</small>
+                  <small>Same {summary.jobsScanned ?? 0} listings returned by Job Search</small>
                 </div>
               </article>
               <article className="skill-gap-stat">
