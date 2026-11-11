@@ -70,14 +70,8 @@ const getRoleRelevance = (job, role) => {
 
   const title = clean(job.title).toLowerCase();
   const context = (title + " " + clean(job.description) + " " + clean(job.requirements)).toLowerCase();
-  const titleMatches = roleWords.filter((word) => title.includes(word)).length;
-  const contextMatches = roleWords.filter((word) => context.includes(word)).length;
-
-  if (title.includes(clean(role).toLowerCase())) return 100;
-  return Math.min(100, Math.round(
-    (titleMatches / roleWords.length) * 70 +
-    (contextMatches / roleWords.length) * 30
-  ));
+  const matchedRoleTerms = roleWords.filter((word) => context.includes(word)).length;
+  return Math.round((matchedRoleTerms / roleWords.length) * 100);
 };
 
 // Count requirement evidence only when the signal is grammatically tied to
