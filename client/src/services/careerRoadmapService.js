@@ -7,8 +7,8 @@ export const getCareerRoadmap = async () => {
   return response.data;
 };
 
-export const generateCareerRoadmap = async (missingSkills) => {
-  const response = await API.post("/career-roadmap/generate", { missingSkills }, authConfig());
+export const generateCareerRoadmap = async (targetRole, missingSkills) => {
+  const response = await API.post("/career-roadmap/generate", { targetRole, missingSkills }, authConfig());
   return response.data;
 };
 
