@@ -4,6 +4,6 @@ const { getSkillGapOverview } = require("../controllers/skillGapController");
 
 const router = express.Router();
 
-router.get("/overview", authMiddleware, getSkillGapOverview);
+router.post("/overview", authMiddleware, getSkillGapOverview);
 
 module.exports = router;
