@@ -118,7 +118,7 @@ function SkillGapAnalysis() {
               <div className="hero-copy">
                 <span className="hero-kicker">PROFILE VS JOB REQUIREMENTS</span>
                 <h2>{profile.targetRole || "Target role not set"}</h2>
-                <p>Your profile skills were compared with the skills found in {summary.jobsAnalysed ?? 0} role-matched job listings.</p>
+                <p>Your profile skills were compared with the skills found in {summary.jobsAnalysed ?? 0} role-related job listings.</p>
                 <div className="hero-pills">
                   <span><i className="legend-dot matched-dot" /> {matchedOccurrences} matched occurrences</span>
                   <span><i className="legend-dot missing-dot" /> {missingOccurrences} missing occurrences</span>
