@@ -106,7 +106,7 @@ function SkillGapAnalysis() {
               </article>
               <article className="skill-gap-stat">
                 <span className="stat-icon red"><TrendingUp size={19} /></span>
-                <div><span>Skill occurrences</span><strong>{summary.totalSkillOccurrences ?? 0}</strong><small>Skill mentions across the analysed jobs</small></div>
+                <div><span>Skill coverage</span><strong>{coverage}%</strong><small>Share of distinct job skills in your profile</small></div>
               </article>
             </section>
 
