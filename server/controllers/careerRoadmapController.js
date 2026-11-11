@@ -8,8 +8,10 @@ const normalize = (value) => clean(value).toLowerCase().replace(/\s+/g, " ");
 const getUserId = (req) => req.user && (req.user._id || req.user.id || req.user.userId);
 
 const OFFICIAL_RESOURCES = [
-  { match: ["javascript", "typescript", "html", "css"], title: "MDN Web Docs", url: "https://developer.mozilla.org/" },
-  { match: ["react", "react.js", "next.js"], title: "React Documentation", url: "https://react.dev/learn" },
+  { match: ["javascript", "html", "css"], title: "MDN Web Docs", url: "https://developer.mozilla.org/" },
+  { match: ["typescript"], title: "TypeScript Handbook", url: "https://www.typescriptlang.org/docs/" },
+  { match: ["react", "react.js"], title: "React Documentation", url: "https://react.dev/learn" },
+  { match: ["next.js"], title: "Next.js Documentation", url: "https://nextjs.org/docs" },
   { match: ["node.js", "nodejs"], title: "Node.js Documentation", url: "https://nodejs.org/docs/latest/api/" },
   { match: ["express", "express.js"], title: "Express Documentation", url: "https://expressjs.com/" },
   { match: ["mongodb"], title: "MongoDB Documentation", url: "https://www.mongodb.com/docs/" },
@@ -71,7 +73,7 @@ const getGeminiJson = async (targetRole, currentSkills, missingSkills) => {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: { responseMimeType: "application/json", temperature: 0.25, maxOutputTokens: 16384 },
+      generationConfig: { responseMimeType: "application/json", temperature: 0.25, maxOutputTokens: 24576 },
     }),
     signal: AbortSignal.timeout(90000),
   });
@@ -186,9 +188,11 @@ const generateCareerRoadmap = async (req, res) => {
     const previous = await CareerRoadmap.findOne({ userId }).lean();
     const previousByName = new Map((previous && previous.skills ? previous.skills : []).map((item) => [normalize(item.name), item]));
 
+    const returnedSkillNames = new Set();
     const orderedSkills = aiEntries.map((entry) => {
       const requested = requestedByName.get(normalize(entry && entry.skill));
-      if (!requested) return null;
+      if (!requested || returnedSkillNames.has(normalize(requested.name))) return null;
+      returnedSkillNames.add(normalize(requested.name));
       const topics = (Array.isArray(entry.topics) ? entry.topics : []).slice(0, 8).map((topic) => ({
         title: clean(topic && topic.title).slice(0, 140),
         overview: clean(topic && topic.overview).slice(0, 700),
@@ -214,7 +218,7 @@ const generateCareerRoadmap = async (req, res) => {
       };
     }).filter(Boolean);
 
-    if (orderedSkills.length !== missingSkills.length) {
+    if (orderedSkills.length !== missingSkills.length || returnedSkillNames.size !== missingSkills.length) {
       const error = new Error("The AI did not return a complete learning path for every missing skill. Please try generating it again.");
       error.statusCode = 502;
       throw error;
