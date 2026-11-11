@@ -89,7 +89,7 @@ const isExplicitlyRequired = (skill, job) => {
     clean(job.requirements),
     clean(job.qualifications),
     clean(job.description),
-  ].filter(Boolean).join("\\n");
+  ].filter(Boolean).join(" ");
   if (!requirementText) return false;
 
   const escapedSkill = escapeRegex(skill);
