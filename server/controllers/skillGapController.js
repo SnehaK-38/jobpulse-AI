@@ -12,6 +12,13 @@ const EXCLUDED_SKILL_TERMS = new Set([
   "recruitment", "human resources", "hr", "documentation",
   "responsibilities", "requirements", "qualifications", "job description",
   "apache",
+  "engineer", "engineering", "developer", "development",
+  "senior", "junior", "mid-level", "entry-level", "lead",
+  "staff", "principal", "associate", "intern", "internship",
+  "manager", "management", "architect", "analyst", "specialist",
+  "consultant", "director", "executive", "coordinator",
+  "professional", "fresher", "years", "year", "experience",
+  "role", "position", "job", "candidate", "team",
 ]);
 
 const clean = (value) => String(value ?? "").trim();
@@ -49,6 +56,7 @@ const isUsefulSkill = (value) => {
   if (!key || key.length < 2 || EXCLUDED_SKILL_TERMS.has(key)) return false;
   if (/^(?:[0-9]+|[a-z])$/.test(key)) return false;
   if (key.split(" ").length > 5) return false;
+  if (/\b(engineer|engineering|developer|development|senior|junior|lead|staff|principal|associate|intern|manager|management|architect|analyst|specialist|consultant|director|executive|coordinator|fresher|experience|years?)\b/i.test(key)) return false;
   return true;
 };
 
@@ -111,10 +119,19 @@ const getSkillGapOverview = async (req, res) => {
       return res.status(401).json({ success: false, message: "Please log in to view your skill gap analysis." });
     }
 
+    const jobIds = Array.isArray(req.body?.jobIds)
+      ? [...new Set(req.body.jobIds.map((id) => clean(id)).filter(Boolean))]
+      : [];
+    if (!jobIds.length) {
+      return res.status(400).json({
+        success: false,
+        message: "No job results were supplied. Open Job Search and refresh the recommendations first.",
+      });
+    }
+
     const user = await User.findById(userId)
       .select("fullName targetRole skills resumeSkills resumeOriginalName")
       .lean();
-
     if (!user) {
       return res.status(404).json({ success: false, message: "User profile not found." });
     }
@@ -125,28 +142,20 @@ const getSkillGapOverview = async (req, res) => {
     ]);
     const role = clean(user.targetRole);
 
-    // Match the dashboard's exclusion of fabricated/legacy placeholder URLs.
-    const validJobQuery = {
+    // Analyse the exact stored job records returned by the existing Job Search API.
+    const jobs = await Job.find({
+      _id: { $in: jobIds },
       $nor: [
         { jobUrl: /jobpulse_id=/i },
         { jobUrl: /linkedin\.com\/jobs\/search/i },
       ],
-    };
-
-    const [cachedJobs, totalAvailableJobs] = await Promise.all([
-      Job.find(validJobQuery)
-        .select("title company description requirements qualifications skills detectedJobSkills location source scrapedAt jobUrl")
-        .sort({ postedDate: -1, scrapedAt: -1 })
-        .lean(),
-      Job.countDocuments(validJobQuery),
-    ]);
-
-    const relevantJobs = cachedJobs
-      .map((job) => ({ ...job, roleRelevance: getRoleRelevance(job, role) }))
-      .filter((job) => !role || job.roleRelevance > 0);
+    })
+      .select("title company description requirements qualifications skills detectedJobSkills location source scrapedAt jobUrl")
+      .lean();
 
     const skillStats = new Map();
-    for (const job of relevantJobs) {
+    for (const job of jobs) {
+      const roleRelevance = getRoleRelevance(job, role);
       for (const [key, display] of getJobSkills(job).entries()) {
         if (profileSkills.has(key)) continue;
         if (!skillStats.has(key)) {
@@ -154,13 +163,11 @@ const getSkillGapOverview = async (req, res) => {
         }
         const stat = skillStats.get(key);
         stat.jobCount += 1;
-        stat.relevanceTotal += job.roleRelevance;
+        stat.relevanceTotal += roleRelevance;
         if (isExplicitlyRequired(display, job)) stat.requiredCount += 1;
       }
     }
 
-    // Rank skills using observed dataset evidence, without fixed weights or score thresholds.
-    // Order: number of jobs mentioning the skill, requirement-signal rate, then average role relevance.
     const missingSkills = Array.from(skillStats.values()).map((item) => ({
       name: item.name,
       jobCount: item.jobCount,
@@ -181,8 +188,7 @@ const getSkillGapOverview = async (req, res) => {
     const allJobSkillKeys = new Set();
     let matchedOccurrences = 0;
     let totalOccurrences = 0;
-
-    for (const job of relevantJobs) {
+    for (const job of jobs) {
       for (const key of getJobSkills(job).keys()) {
         allJobSkillKeys.add(key);
         totalOccurrences += 1;
@@ -205,9 +211,9 @@ const getSkillGapOverview = async (req, res) => {
         currentSkills: Array.from(profileSkills.values()).sort((a, b) => a.localeCompare(b)),
       },
       summary: {
-        jobsAnalysed: relevantJobs.length,
-        jobsScanned: cachedJobs.length,
-        totalAvailableJobs,
+        jobsAnalysed: jobs.length,
+        jobsScanned: jobs.length,
+        totalAvailableJobs: jobs.length,
         matchedSkills: matchedSkills.length,
         missingSkills: missingSkills.length,
         coverage,
@@ -217,11 +223,9 @@ const getSkillGapOverview = async (req, res) => {
       },
       matchedSkills,
       missingSkills,
-      message: relevantJobs.length
+      message: jobs.length
         ? ""
-        : role
-          ? "No cached jobs matched your target role yet. Visit Job Search to fetch relevant opportunities, then refresh this analysis."
-          : "Add a target role in your profile and fetch jobs to build a role-specific skill gap analysis.",
+        : "The current Job Search results could not be matched to stored job records. Refresh Job Search and try again.",
     });
   } catch (error) {
     console.error("getSkillGapOverview error:", error);
