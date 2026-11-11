@@ -50,7 +50,7 @@ function SkillGapAnalysis() {
   const summary = data?.summary || {};
   const currentSkills = profile.currentSkills || [];
   const missingSkills = data?.missingSkills || [];
-  const priorityPageSize = 10;
+  const priorityPageSize = 5;
   const priorityPageCount = Math.ceil(missingSkills.length / priorityPageSize);
   const visiblePrioritySkills = missingSkills.slice(
     priorityPage * priorityPageSize,
@@ -208,6 +208,7 @@ function SkillGapAnalysis() {
                             <span>Appears in {skill.jobCount} {skill.jobCount === 1 ? "job" : "jobs"} · {skill.requiredCount} nearby requirement signals</span>
                           </div>
                           <div className="priority-score"><strong>{skill.jobCount}</strong><span>{skill.jobCount === 1 ? "job" : "jobs"}</span></div>
+                          <span className={`priority-badge ${(skill.priority || "Low").toLowerCase()}`}>{skill.priority || "Low"}</span>
                         </div>
                         <details className="priority-breakdown">
                           <summary>View supporting evidence</summary>
@@ -217,7 +218,7 @@ function SkillGapAnalysis() {
                             <BreakdownItem label="Requirement signal rate" value={skill.requirementRate + "%"} />
                             <BreakdownItem label="Average role relevance" value={skill.averageRoleRelevance + "%"} />
                           </div>
-                          <p className="breakdown-note">These are observed counts and averages from the analysed job listings. No fixed score weights or High/Medium/Low cut-offs are applied.</p>
+                          <p className="breakdown-note">These are observed counts and averages from the analysed job listings. Priority labels are relative to the current results: High is at or above the upper quartile of job demand, Medium is at or above the median, and Low is below the median.</p>
                         </details>
                       </div>
                     ))}
@@ -247,7 +248,7 @@ function SkillGapAnalysis() {
                 <div className="method-icon"><Activity size={18} /></div>
                 <div>
                   <strong>How skills are ordered</strong>
-                  <p>Skills are ranked using observed data: how many analysed jobs mention each skill, how often it appears with a nearby requirement signal, and the average relevance of those jobs to your target role. No fixed weights or score thresholds are used.</p>
+                  <p>Skills are ranked using observed data: how many analysed jobs mention each skill, how often it appears with a nearby requirement signal, and the average relevance of those jobs to your target role. Priority labels are calculated from the distribution of skill demand in the current job results, not fixed score cut-offs.</p>
                 </div>
               </div>
             </section>
