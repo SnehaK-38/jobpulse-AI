@@ -57,7 +57,7 @@ const getGeminiJson = async (targetRole, currentSkills, missingSkills) => {
     "For each topic provide: title, overview, concise study notes (roughly 70-120 words), 3-6 keyPoints, one practical practiceTask, and estimatedHours (a realistic number).",
     "Use the learner's existing skills to avoid teaching prerequisites they already know.",
     "List prerequisites only when genuinely needed. If a prerequisite is already in currentSkills, mention it in the reason but do not add it as a missing roadmap skill.",
-    "Arrange the missing skills in a sensible order. If one missing skill depends on another, place the prerequisite first.",
+    "Arrange the missing skills in a sensible order. Use High priority as a preference when multiple sequences are valid, but never violate prerequisites. If one missing skill depends on another, place the prerequisite first.",
     "Do not generate URLs, video IDs, course names, or unverifiable resource links. The application supplies trusted documentation links and YouTube search results separately.",
     "Return valid JSON only with this exact shape:",
     '{"learningPath":[{"skill":"exact supplied skill name","reason":"short role-specific explanation","prerequisites":["existing or other supplied skill"],"topics":[{"title":"...","overview":"...","notes":"...","keyPoints":["..."],"practiceTask":"...","estimatedHours":2}]}]}',
