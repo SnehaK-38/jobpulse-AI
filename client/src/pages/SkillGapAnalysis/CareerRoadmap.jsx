@@ -14,7 +14,7 @@ import {
   RefreshCw,
   Route,
   Sparkles,
-  Youtube,
+
 } from "lucide-react";
 import {
   generateCareerRoadmap,
@@ -259,7 +259,7 @@ function CareerRoadmap({ analysis }) {
                         </div>
                       ) : skill.youtubeSearchUrl ? (
                         <a href={skill.youtubeSearchUrl} target="_blank" rel="noreferrer">
-                          <Youtube size={15} /> Find tutorials on YouTube <ExternalLink size={12} />
+                          <PlayCircle size={15} /> Find tutorials on YouTube <ExternalLink size={12} />
                         </a>
                       ) : null}
                     </div>
