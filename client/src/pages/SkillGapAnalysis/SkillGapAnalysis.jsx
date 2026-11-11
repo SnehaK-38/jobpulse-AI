@@ -12,6 +12,8 @@ import {
   TrendingUp,
   BriefcaseBusiness,
   Layers3,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import Navbar from "../../components/Navbar/Navbar";
 import { getSkillGapOverview } from "../../services/skillGapService";
@@ -21,6 +23,7 @@ function SkillGapAnalysis() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [priorityPage, setPriorityPage] = useState(0);
 
   const loadAnalysis = useCallback(async () => {
     try {
@@ -28,6 +31,7 @@ function SkillGapAnalysis() {
       setError("");
       const result = await getSkillGapOverview();
       setData(result);
+      setPriorityPage(0);
     } catch (err) {
       setError(
         err?.response?.data?.message ||
@@ -46,6 +50,12 @@ function SkillGapAnalysis() {
   const summary = data?.summary || {};
   const currentSkills = profile.currentSkills || [];
   const missingSkills = data?.missingSkills || [];
+  const priorityPageSize = 10;
+  const priorityPageCount = Math.ceil(missingSkills.length / priorityPageSize);
+  const visiblePrioritySkills = missingSkills.slice(
+    priorityPage * priorityPageSize,
+    (priorityPage + 1) * priorityPageSize
+  );
   const matchedSkills = data?.matchedSkills || [];
   const coverage = Number(summary.coverage || 0);
   const totalOccurrences = Number(summary.totalSkillOccurrences || 0);
@@ -189,10 +199,10 @@ function SkillGapAnalysis() {
                 <p className="panel-description">Missing technologies ordered by how often they appear, requirement evidence and relevance to your target role.</p>
                 {missingSkills.length ? (
                   <div className="priority-list">
-                    {missingSkills.map((skill, index) => (
+                    {visiblePrioritySkills.map((skill, index) => (
                       <div className="priority-item" key={skill.name}>
                         <div className="priority-row">
-                          <span className="priority-rank">{String(index + 1).padStart(2, "0")}</span>
+                          <span className="priority-rank">{String(priorityPage * priorityPageSize + index + 1).padStart(2, "0")}</span>
                           <div className="priority-skill-main">
                             <strong>{skill.name}</strong>
                             <span>Appears in {skill.jobCount} {skill.jobCount === 1 ? "job" : "jobs"} · {skill.requiredCount} nearby requirement signals</span>
@@ -213,7 +223,17 @@ function SkillGapAnalysis() {
                     ))}
                   </div>
                 ) : (
-                  <div className="panel-empty">No missing skills were identified from the available job data.</div>
+                  <div className="panel-empty">No missing technical skills were identified in the current job results.</div>
+                )}
+                {priorityPageCount > 1 && (
+                  <div className="priority-pagination">
+                    <span>Showing {priorityPage * priorityPageSize + 1}–{Math.min((priorityPage + 1) * priorityPageSize, missingSkills.length)} of {missingSkills.length} skills</span>
+                    <div className="priority-pagination-actions">
+                      <button type="button" onClick={() => setPriorityPage((page) => Math.max(0, page - 1))} disabled={priorityPage === 0} aria-label="Previous skills"><ChevronLeft size={17} /></button>
+                      <span>{priorityPage + 1} / {priorityPageCount}</span>
+                      <button type="button" onClick={() => setPriorityPage((page) => Math.min(priorityPageCount - 1, page + 1))} disabled={priorityPage >= priorityPageCount - 1} aria-label="Next skills"><ChevronRight size={17} /></button>
+                    </div>
+                  </div>
                 )}
               </article>
             </section>
