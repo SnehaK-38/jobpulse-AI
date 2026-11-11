@@ -151,3 +151,9 @@
 .priority-pagination-actions button { display:grid; place-items:center; width:30px; height:30px; border:1px solid #e2e5ef; border-radius:8px; background:#fff; color:#5d50cf; cursor:pointer; }
 .priority-pagination-actions button:disabled { color:#b9bfcd; background:#f6f7fa; cursor:not-allowed; }
 .priority-pagination-actions span { min-width:34px; text-align:center; color:#626d85; font-weight:700; }
+
+
+.skill-gap-view-tabs { display:flex; align-items:center; gap:7px; margin:0 0 18px; padding:5px; width:max-content; max-width:100%; border:1px solid #e5e7f0; border-radius:11px; background:#fff; }
+.skill-gap-view-tabs button { display:inline-flex; align-items:center; justify-content:center; gap:7px; min-height:35px; padding:0 13px; border:0; border-radius:8px; background:transparent; color:#7b8499; font-size:12px; font-weight:700; cursor:pointer; }
+.skill-gap-view-tabs button.active { background:#f0edff; color:#5d50ce; box-shadow:inset 0 0 0 1px #e4dfff; }
+@media (max-width:480px) { .skill-gap-view-tabs { width:100%; } .skill-gap-view-tabs button { flex:1; padding:0 8px; font-size:11px; } }
