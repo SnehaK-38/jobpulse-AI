@@ -83,7 +83,7 @@ function SkillGapAnalysis() {
               <article className="skill-gap-stat">
                 <span className="stat-icon violet"><BriefcaseBusiness size={19} /></span>
                 <div>
-                  <span>Role-matched jobs analysed</span>
+                  <span>Role-related jobs analysed</span>
                   <strong>{summary.jobsAnalysed ?? 0}</strong>
                   <small>{summary.jobsScanned ?? 0} of {summary.totalAvailableJobs ?? 0} available listings scanned</small>
                 </div>
@@ -98,7 +98,7 @@ function SkillGapAnalysis() {
               </article>
               <article className="skill-gap-stat">
                 <span className="stat-icon red"><TrendingUp size={19} /></span>
-                <div><span>High-priority gaps</span><strong>{summary.highPrioritySkills ?? 0}</strong><small>Priority score of 65 or higher</small></div>
+                <div><span>Skill occurrences</span><strong>{summary.totalSkillOccurrences ?? 0}</strong><small>Skill mentions across the analysed jobs</small></div>
               </article>
             </section>
 
@@ -186,10 +186,10 @@ function SkillGapAnalysis() {
                   <div><span className="panel-kicker">WHAT TO LEARN NEXT</span><h2>Priority skills</h2></div>
                   <span className="priority-icon"><TrendingUp size={18} /></span>
                 </div>
-                <p className="panel-description">Relevant missing technologies ranked using job demand, nearby requirement evidence and role relevance.</p>
+                <p className="panel-description">Missing technologies ordered by how often they appear, requirement evidence and relevance to your target role.</p>
                 {missingSkills.length ? (
                   <div className="priority-list">
-                    {missingSkills.slice(0, 8).map((skill, index) => (
+                    {missingSkills.map((skill, index) => (
                       <div className="priority-item" key={skill.name}>
                         <div className="priority-row">
                           <span className="priority-rank">{String(index + 1).padStart(2, "0")}</span>
@@ -197,17 +197,17 @@ function SkillGapAnalysis() {
                             <strong>{skill.name}</strong>
                             <span>Appears in {skill.jobCount} {skill.jobCount === 1 ? "job" : "jobs"} · {skill.requiredCount} nearby requirement signals</span>
                           </div>
-                          <div className="priority-score"><strong>{skill.priorityScore}</strong><span>/100</span></div>
-                          <span className={"priority-badge " + skill.priority.toLowerCase()}>{skill.priority}</span>
+                          <div className="priority-score"><strong>{skill.jobCount}</strong><span>{skill.jobCount === 1 ? "job" : "jobs"}</span></div>
                         </div>
                         <details className="priority-breakdown">
-                          <summary>View score breakdown</summary>
+                          <summary>View supporting evidence</summary>
                           <div className="breakdown-grid">
-                            <BreakdownItem label="Job demand" score={skill.scoreBreakdown?.demand} weight={50} />
-                            <BreakdownItem label="Requirement signals" score={skill.scoreBreakdown?.importance} weight={30} />
-                            <BreakdownItem label="Role relevance" score={skill.scoreBreakdown?.roleRelevance} weight={20} />
+                            <BreakdownItem label="Jobs mentioning this skill" value={skill.jobCount} />
+                            <BreakdownItem label="Nearby requirement signals" value={skill.requiredCount} />
+                            <BreakdownItem label="Requirement signal rate" value={skill.requirementRate + "%"} />
+                            <BreakdownItem label="Average role relevance" value={skill.averageRoleRelevance + "%"} />
                           </div>
-                          <p className="breakdown-note">Weighted score = demand × 50% + requirement signals × 30% + role relevance × 20%.</p>
+                          <p className="breakdown-note">These are observed counts and averages from the analysed job listings. No fixed score weights or High/Medium/Low cut-offs are applied.</p>
                         </details>
                       </div>
                     ))}
@@ -215,7 +215,6 @@ function SkillGapAnalysis() {
                 ) : (
                   <div className="panel-empty">No missing skills were identified from the available job data.</div>
                 )}
-                {missingSkills.length > 8 && <p className="priority-more">Showing the 8 highest-priority gaps out of {missingSkills.length}.</p>}
               </article>
             </section>
 
@@ -227,8 +226,8 @@ function SkillGapAnalysis() {
               <div className="priority-method">
                 <div className="method-icon"><Activity size={18} /></div>
                 <div>
-                  <strong>How priority is calculated</strong>
-                  <p>50% job demand · 30% requirement signals near the skill mention · 20% target-role relevance. High ≥65, Medium ≥35, Low below 35. Scores are heuristic indicators, not a guarantee of hiring outcomes.</p>
+                  <strong>How skills are ordered</strong>
+                  <p>Skills are ranked using observed data: how many analysed jobs mention each skill, how often it appears with a nearby requirement signal, and the average relevance of those jobs to your target role. No fixed weights or score thresholds are used.</p>
                 </div>
               </div>
             </section>
@@ -239,13 +238,10 @@ function SkillGapAnalysis() {
   );
 }
 
-function BreakdownItem({ label, score = 0, weight }) {
-  const safeScore = Number(score || 0);
+function BreakdownItem({ label, value = 0 }) {
   return (
     <div className="breakdown-item">
-      <div><span>{label}</span><strong>{safeScore}/100</strong></div>
-      <div className="breakdown-track"><span style={{ width: safeScore + "%" }} /></div>
-      <small>{weight}% weight · contributes {(safeScore * weight / 100).toFixed(1)} points</small>
+      <div><span>{label}</span><strong>{value}</strong></div>
     </div>
   );
 }
