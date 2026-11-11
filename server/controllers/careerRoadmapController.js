@@ -158,6 +158,10 @@ const generateCareerRoadmap = async (req, res) => {
 
     const targetRole = clean(user.targetRole);
     if (!targetRole) return res.status(400).json({ success: false, message: "Set a target role in your profile before generating a roadmap." });
+    const requestedTargetRole = clean(req.body && req.body.targetRole);
+    if (requestedTargetRole && normalize(requestedTargetRole) !== normalize(targetRole)) {
+      return res.status(409).json({ success: false, message: "Your target role changed after this analysis. Refresh Skill Gap Analysis, then generate the roadmap again." });
+    }
 
     const suppliedSkills = Array.isArray(req.body && req.body.missingSkills) ? req.body.missingSkills : [];
     const currentSkills = Array.from(new Set([
