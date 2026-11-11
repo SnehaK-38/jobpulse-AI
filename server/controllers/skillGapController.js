@@ -212,8 +212,11 @@ const getSkillGapOverview = async (req, res) => {
     const matchedSkills = Array.from(allJobSkillKeys)
       .filter((key) => profileSkills.has(key))
       .map((key) => profileSkills.get(key));
-    const coverage = totalOccurrences
-      ? Math.round((matchedOccurrences / totalOccurrences) * 100)
+    // Dashboard coverage is based on distinct skills, not repeated mentions.
+    // Each normalized skill is counted once across the complete analysed job set.
+    const totalDistinctJobSkills = allJobSkillKeys.size;
+    const coverage = totalDistinctJobSkills
+      ? Math.round((matchedSkills.length / totalDistinctJobSkills) * 100)
       : 0;
 
     return res.json({
@@ -229,7 +232,9 @@ const getSkillGapOverview = async (req, res) => {
         totalAvailableJobs: jobs.length,
         matchedSkills: matchedSkills.length,
         missingSkills: missingSkills.length,
+        totalDistinctJobSkills,
         coverage,
+        // Retained for optional diagnostics; not used as primary dashboard metrics.
         matchedOccurrences,
         totalSkillOccurrences: totalOccurrences,
         missingOccurrences: totalOccurrences - matchedOccurrences,
