@@ -1,63 +1,63 @@
 const Job = require("../models/Job");
 const User = require("../models/User");
 
-// Generic job terms and ambiguous fragments are not useful standalone skills.
-// Specific technologies such as Apache Kafka and Apache Spark remain valid.
-const EXCLUDED_SKILL_TERMS = new Set([
-  "admin", "administrator", "administration", "sales",
-  "software engineering", "software development", "business",
-  "business development", "management", "leadership",
-  "communication", "teamwork", "problem solving", "customer service",
-  "customer support", "technical support", "operations", "marketing",
-  "recruitment", "human resources", "hr", "documentation",
-  "responsibilities", "requirements", "qualifications", "job description",
-  "apache",
-  "engineer", "engineering", "developer", "development",
-  "senior", "junior", "mid-level", "entry-level", "lead",
-  "staff", "principal", "associate", "intern", "internship",
-  "manager", "management", "architect", "analyst", "specialist",
-  "consultant", "director", "executive", "coordinator",
-  "professional", "fresher", "years", "year", "experience",
-  "role", "position", "job", "candidate", "team", "dev", "backend", "frontend", "full stack", "fullstack", "software", "technical", "technology", "technologies", "programming", "computer science", "information technology", "skills", "knowledge", "tools",
+// Only recognised technical skills are allowed into the analysis.
+// Company names and generic job-description words are deliberately excluded.
+const TECHNICAL_SKILLS = new Set([
+  "java", "python", "javascript", "typescript", "c", "c++", "c#", "go", "rust", "php", "ruby", "swift", "kotlin", "r", "scala",
+  "html", "css", "react", "angular", "vue", "next.js", "nodejs", "express.js", "redux", "tailwind css", "bootstrap", "material ui", "vite", "webpack",
+  "spring", "spring boot", "django", "flask", "fastapi", ".net", "asp.net", "laravel",
+  "sql", "mysql", "postgresql", "mongodb", "sqlite", "redis", "oracle", "firebase", "dynamodb", "cassandra", "elasticsearch",
+  "aws", "azure", "gcp", "docker", "kubernetes", "jenkins", "git", "github", "gitlab", "terraform", "ansible", "linux", "bash", "powershell",
+  "kafka", "spark", "hadoop", "airflow", "maven", "gradle", "nginx", "tomcat",
+  "machine learning", "deep learning", "artificial intelligence", "nlp", "computer vision", "tensorflow", "pytorch", "scikit-learn", "pandas", "numpy", "matplotlib", "seaborn", "opencv",
+  "tableau", "power bi", "excel", "selenium", "cypress", "jest", "junit", "postman", "swagger", "figma", "jira", "vscode", "intellij", "eclipse",
+  "rest api", "graphql", "websocket", "oauth", "jwt", "microservices", "oop", "data structures", "algorithms", "ci/cd", "agile", "scrum",
+  "firebase", "postgresql", "tailwind css", "html5", "css3", "redux toolkit", "react native", "electron.js", "chart.js",
 ]);
 
 const clean = (value) => String(value ?? "").trim();
 
 const canonicalSkill = (value) => {
-  const skill = clean(value).toLowerCase().replace(/\s+/g, " ");
+  const skill = clean(value).toLowerCase().replace(/\\s+/g, " ").replace(/\\s*\\.\\s*/g, ".");
   const aliases = {
     js: "javascript",
     "javascript es6": "javascript",
     "node.js": "nodejs",
     "node js": "nodejs",
+    nodejs: "nodejs",
     "react.js": "react",
     reactjs: "react",
     "mongo db": "mongodb",
     mongo: "mongodb",
     postgres: "postgresql",
     ml: "machine learning",
-    "artificial intelligence": "ai",
+    ai: "artificial intelligence",
+    "artificial intelligence": "artificial intelligence",
     "c sharp": "c#",
     "c plus plus": "c++",
     "apache kafka": "kafka",
     "apache spark": "spark",
     "apache airflow": "airflow",
     "apache hadoop": "hadoop",
-    "apache flink": "flink",
-    "apache maven": "maven",
-    "apache tomcat": "tomcat",
-    "apache http server": "apache http server",
+    "microsoft azure": "azure",
+    "ms azure": "azure",
+    "microsoft excel": "excel",
+    "visual studio code": "vscode",
+    "vs code": "vscode",
+    "express": "express.js",
+    "express js": "express.js",
+    "tailwind": "tailwind css",
+    "powerbi": "power bi",
+    "scikit learn": "scikit-learn",
+    "restful api": "rest api",
   };
   return aliases[skill] || skill;
 };
 
 const isUsefulSkill = (value) => {
   const key = canonicalSkill(value);
-  if (!key || key.length < 2 || EXCLUDED_SKILL_TERMS.has(key)) return false;
-  if (/^(?:[0-9]+|[a-z])$/.test(key)) return false;
-  if (key.split(" ").length > 5) return false;
-  if (/\b(engineer|engineering|developer|development|senior|junior|lead|staff|principal|associate|intern|manager|management|architect|analyst|specialist|consultant|director|executive|coordinator|fresher|experience|years?|backend|frontend|fullstack|software|technical|technology|technologies|programming)\b/i.test(key)) return false;
-  return true;
+  return TECHNICAL_SKILLS.has(key);
 };
 
 const uniqueSkills = (values = []) => {
@@ -111,6 +111,15 @@ const getJobSkills = (job) => uniqueSkills([
   ...(Array.isArray(job.skills) ? job.skills : []),
   ...(Array.isArray(job.detectedJobSkills) ? job.detectedJobSkills : []),
 ]);
+
+const getPriorityLevel = (jobCount, sortedJobCounts) => {
+  if (!sortedJobCounts.length) return "Low";
+  const median = sortedJobCounts[Math.floor((sortedJobCounts.length - 1) / 2)];
+  const upperQuartile = sortedJobCounts[Math.floor((sortedJobCounts.length - 1) * 0.75)];
+  if (jobCount >= upperQuartile) return "High";
+  if (jobCount >= median) return "Medium";
+  return "Low";
+};
 
 const getSkillGapOverview = async (req, res) => {
   try {
@@ -168,6 +177,10 @@ const getSkillGapOverview = async (req, res) => {
       }
     }
 
+    const sortedJobCounts = Array.from(skillStats.values())
+      .map((item) => item.jobCount)
+      .sort((a, b) => a - b);
+
     const missingSkills = Array.from(skillStats.values()).map((item) => ({
       name: item.name,
       jobCount: item.jobCount,
@@ -178,9 +191,10 @@ const getSkillGapOverview = async (req, res) => {
       averageRoleRelevance: item.jobCount
         ? Math.round(item.relevanceTotal / item.jobCount)
         : 0,
+      priority: getPriorityLevel(item.jobCount, sortedJobCounts),
     })).sort((a, b) =>
       b.jobCount - a.jobCount ||
-      b.requirementRate - a.requirementRate ||
+      b.requiredCount - a.requiredCount ||
       b.averageRoleRelevance - a.averageRoleRelevance ||
       a.name.localeCompare(b.name)
     );
