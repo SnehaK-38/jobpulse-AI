@@ -10,6 +10,8 @@ import {
   Sparkles,
   Target,
   TrendingUp,
+  BriefcaseBusiness,
+  Layers3,
 } from "lucide-react";
 import Navbar from "../../components/Navbar/Navbar";
 import { getSkillGapOverview } from "../../services/skillGapService";
@@ -45,6 +47,10 @@ function SkillGapAnalysis() {
   const currentSkills = profile.currentSkills || [];
   const missingSkills = data?.missingSkills || [];
   const matchedSkills = data?.matchedSkills || [];
+  const coverage = Number(summary.coverage || 0);
+  const totalOccurrences = Number(summary.totalSkillOccurrences || 0);
+  const matchedOccurrences = Number(summary.matchedOccurrences || 0);
+  const missingOccurrences = Number(summary.missingOccurrences || 0);
 
   return (
     <>
@@ -54,7 +60,7 @@ function SkillGapAnalysis() {
           <div>
             <span className="skill-gap-eyebrow"><Sparkles size={14} /> CAREER INTELLIGENCE</span>
             <h1>Skill Gap Analysis</h1>
-            <p>Understand how your current skills compare with the requirements of jobs matching your target role.</p>
+            <p>See how your saved skills compare with the skills appearing in jobs related to your target role.</p>
           </div>
           <button className="skill-gap-refresh" onClick={loadAnalysis} disabled={loading}>
             <RefreshCw size={16} className={loading ? "is-spinning" : ""} />
@@ -69,29 +75,33 @@ function SkillGapAnalysis() {
           </div>
         )}
 
-        <section className="skill-gap-stats">
-          <article className="skill-gap-stat">
-            <span className="stat-icon violet"><Activity size={19} /></span>
-            <div><span>Jobs analysed</span><strong>{loading ? "—" : summary.jobsAnalysed ?? 0}</strong></div>
-          </article>
-          <article className="skill-gap-stat">
-            <span className="stat-icon green"><CheckCircle2 size={19} /></span>
-            <div><span>Matched skills</span><strong>{loading ? "—" : summary.matchedSkills ?? 0}</strong></div>
-          </article>
-          <article className="skill-gap-stat">
-            <span className="stat-icon orange"><Target size={19} /></span>
-            <div><span>Skill gaps found</span><strong>{loading ? "—" : summary.missingSkills ?? 0}</strong></div>
-          </article>
-          <article className="skill-gap-stat">
-            <span className="stat-icon red"><TrendingUp size={19} /></span>
-            <div><span>High-priority gaps</span><strong>{loading ? "—" : summary.highPrioritySkills ?? 0}</strong></div>
-          </article>
-        </section>
-
         {loading && !data ? (
           <div className="skill-gap-loading"><span className="skill-gap-loader" /> Building your skill gap overview...</div>
         ) : (
           <>
+            <section className="skill-gap-stats">
+              <article className="skill-gap-stat">
+                <span className="stat-icon violet"><BriefcaseBusiness size={19} /></span>
+                <div>
+                  <span>Role-matched jobs analysed</span>
+                  <strong>{summary.jobsAnalysed ?? 0}</strong>
+                  <small>{summary.jobsScanned ?? 0} of {summary.totalAvailableJobs ?? 0} available listings scanned</small>
+                </div>
+              </article>
+              <article className="skill-gap-stat">
+                <span className="stat-icon green"><CheckCircle2 size={19} /></span>
+                <div><span>Matched skills</span><strong>{summary.matchedSkills ?? 0}</strong><small>Distinct skills found in your profile and jobs</small></div>
+              </article>
+              <article className="skill-gap-stat">
+                <span className="stat-icon orange"><Target size={19} /></span>
+                <div><span>Skill gaps found</span><strong>{summary.missingSkills ?? 0}</strong><small>Distinct relevant skills not in your profile</small></div>
+              </article>
+              <article className="skill-gap-stat">
+                <span className="stat-icon red"><TrendingUp size={19} /></span>
+                <div><span>High-priority gaps</span><strong>{summary.highPrioritySkills ?? 0}</strong><small>Priority score of 65 or higher</small></div>
+              </article>
+            </section>
+
             {data?.message && (
               <div className="skill-gap-empty">
                 <CircleHelp size={22} />
@@ -99,16 +109,40 @@ function SkillGapAnalysis() {
               </div>
             )}
 
+            <section className="skill-gap-hero">
+              <div className="hero-score-wrap">
+                <div className="hero-score-ring" style={{ "--coverage": coverage + "%" }}>
+                  <div><strong>{coverage}%</strong><span>Skill coverage</span></div>
+                </div>
+              </div>
+              <div className="hero-copy">
+                <span className="hero-kicker">PROFILE VS JOB REQUIREMENTS</span>
+                <h2>{profile.targetRole || "Target role not set"}</h2>
+                <p>Your profile skills were compared with the skills found in {summary.jobsAnalysed ?? 0} role-matched job listings.</p>
+                <div className="hero-pills">
+                  <span><i className="legend-dot matched-dot" /> {matchedOccurrences} matched occurrences</span>
+                  <span><i className="legend-dot missing-dot" /> {missingOccurrences} missing occurrences</span>
+                </div>
+              </div>
+              <div className="hero-total">
+                <span>Total skill occurrences</span>
+                <strong>{totalOccurrences}</strong>
+                <small>Across the analysed listings</small>
+              </div>
+            </section>
+
             <section className="skill-gap-grid">
               <article className="skill-gap-panel current-panel">
                 <div className="panel-heading">
                   <div><span className="panel-kicker">YOUR PROFILE</span><h2>Current skills</h2></div>
                   <span className="panel-count">{currentSkills.length}</span>
                 </div>
-                <p className="panel-description">Skills currently available in your saved profile and parsed resume.</p>
+                <p className="panel-description">Skills currently saved in your profile or extracted from your resume.</p>
                 {currentSkills.length ? (
                   <div className="skill-chip-list">
-                    {currentSkills.map((skill) => <span className="current-skill-chip" key={skill}><CheckCircle2 size={13} />{skill}</span>)}
+                    {currentSkills.map((skill) => (
+                      <span className="current-skill-chip" key={skill}><CheckCircle2 size={13} />{skill}</span>
+                    ))}
                   </div>
                 ) : (
                   <div className="panel-empty">No skills found. Upload or update your resume to populate this section.</div>
@@ -118,13 +152,32 @@ function SkillGapAnalysis() {
 
               <article className="skill-gap-panel coverage-panel">
                 <div className="panel-heading">
-                  <div><span className="panel-kicker">ROLE COMPATIBILITY</span><h2>Skill coverage</h2></div>
-                  <span className="coverage-icon"><Target size={18} /></span>
+                  <div><span className="panel-kicker">SKILL GAP OVERVIEW</span><h2>Profile vs job skills</h2></div>
+                  <span className="coverage-icon"><Layers3 size={18} /></span>
                 </div>
-                <div className="coverage-number">{summary.coverage ?? 0}<small>%</small></div>
-                <p className="panel-description">Your current skills matched against skills found in the analysed job listings.</p>
-                <div className="coverage-track"><span style={{ width: `${Math.max(0, Math.min(100, summary.coverage || 0))}%` }} /></div>
-                <div className="coverage-legend"><span><i className="legend-dot matched-dot" />Matched skills: {matchedSkills.length}</span><span><i className="legend-dot missing-dot" />Missing skills: {missingSkills.length}</span></div>
+                <div className="gap-bars">
+                  <div className="gap-bar-column">
+                    <div className="gap-bar-value">{matchedOccurrences}</div>
+                    <div className="gap-bar-track matched-track"><span style={{ height: totalOccurrences ? (matchedOccurrences / totalOccurrences) * 100 + "%" : "0%" }} /></div>
+                    <strong>Matched</strong>
+                    <small>{matchedSkills.length} distinct skills</small>
+                  </div>
+                  <div className="gap-bar-column">
+                    <div className="gap-bar-value">{missingOccurrences}</div>
+                    <div className="gap-bar-track missing-track"><span style={{ height: totalOccurrences ? (missingOccurrences / totalOccurrences) * 100 + "%" : "0%" }} /></div>
+                    <strong>Missing</strong>
+                    <small>{missingSkills.length} distinct skills</small>
+                  </div>
+                </div>
+                <div className="coverage-track"><span style={{ width: coverage + "%" }} /></div>
+                <div className="coverage-legend">
+                  <span><i className="legend-dot matched-dot" />Coverage: {coverage}%</span>
+                  <span><i className="legend-dot missing-dot" />Gap: {100 - coverage}%</span>
+                </div>
+                <div className="coverage-explainer">
+                  <strong>How to read this</strong>
+                  <p>{matchedOccurrences} of {totalOccurrences} skill occurrences across the analysed jobs match skills in your profile. Repeated skills in different jobs count as separate occurrences.</p>
+                </div>
                 <div className="target-role"><span>Target role</span><strong>{profile.targetRole || "Not set in profile"}</strong></div>
               </article>
 
@@ -133,15 +186,29 @@ function SkillGapAnalysis() {
                   <div><span className="panel-kicker">WHAT TO LEARN NEXT</span><h2>Priority skills</h2></div>
                   <span className="priority-icon"><TrendingUp size={18} /></span>
                 </div>
-                <p className="panel-description">Skills ranked by demand across analysed jobs, explicit requirement signals and target-role relevance.</p>
+                <p className="panel-description">Relevant missing technologies ranked using job demand, nearby requirement evidence and role relevance.</p>
                 {missingSkills.length ? (
                   <div className="priority-list">
                     {missingSkills.slice(0, 8).map((skill, index) => (
-                      <div className="priority-row" key={skill.name}>
-                        <span className="priority-rank">{String(index + 1).padStart(2, "0")}</span>
-                        <div className="priority-skill-main"><strong>{skill.name}</strong><span>Appears in {skill.jobCount} {skill.jobCount === 1 ? "job" : "jobs"}</span></div>
-                        <div className="priority-score"><strong>{skill.priorityScore}</strong><span>/100</span></div>
-                        <span className={`priority-badge ${skill.priority.toLowerCase()}`}>{skill.priority}</span>
+                      <div className="priority-item" key={skill.name}>
+                        <div className="priority-row">
+                          <span className="priority-rank">{String(index + 1).padStart(2, "0")}</span>
+                          <div className="priority-skill-main">
+                            <strong>{skill.name}</strong>
+                            <span>Appears in {skill.jobCount} {skill.jobCount === 1 ? "job" : "jobs"} · {skill.requiredCount} nearby requirement signals</span>
+                          </div>
+                          <div className="priority-score"><strong>{skill.priorityScore}</strong><span>/100</span></div>
+                          <span className={"priority-badge " + skill.priority.toLowerCase()}>{skill.priority}</span>
+                        </div>
+                        <details className="priority-breakdown">
+                          <summary>View score breakdown</summary>
+                          <div className="breakdown-grid">
+                            <BreakdownItem label="Job demand" score={skill.scoreBreakdown?.demand} weight={50} />
+                            <BreakdownItem label="Requirement signals" score={skill.scoreBreakdown?.importance} weight={30} />
+                            <BreakdownItem label="Role relevance" score={skill.scoreBreakdown?.roleRelevance} weight={20} />
+                          </div>
+                          <p className="breakdown-note">Weighted score = demand × 50% + requirement signals × 30% + role relevance × 20%.</p>
+                        </details>
                       </div>
                     ))}
                   </div>
@@ -155,17 +222,31 @@ function SkillGapAnalysis() {
             <section className="skill-gap-bottom">
               <div className="matched-summary">
                 <div className="matched-summary-icon"><CheckCircle2 size={19} /></div>
-                <div><strong>{matchedSkills.length} skills matched</strong><p>{matchedSkills.length ? matchedSkills.join(" · ") : "Matched skills will appear when relevant jobs contain skills from your profile."}</p></div>
+                <div><strong>{matchedSkills.length} distinct skills matched</strong><p>{matchedSkills.length ? matchedSkills.join(" · ") : "Matched skills will appear when relevant jobs contain skills from your profile."}</p></div>
               </div>
               <div className="priority-method">
-                <div className="method-icon"><ArrowUpRight size={18} /></div>
-                <div><strong>How priority is calculated</strong><p>50% job demand · 30% explicit requirement signals · 20% target-role relevance. Scores are calculated from the currently available job listings.</p></div>
+                <div className="method-icon"><Activity size={18} /></div>
+                <div>
+                  <strong>How priority is calculated</strong>
+                  <p>50% job demand · 30% requirement signals near the skill mention · 20% target-role relevance. High ≥65, Medium ≥35, Low below 35. Scores are heuristic indicators, not a guarantee of hiring outcomes.</p>
+                </div>
               </div>
             </section>
           </>
         )}
       </main>
     </>
+  );
+}
+
+function BreakdownItem({ label, score = 0, weight }) {
+  const safeScore = Number(score || 0);
+  return (
+    <div className="breakdown-item">
+      <div><span>{label}</span><strong>{safeScore}/100</strong></div>
+      <div className="breakdown-track"><span style={{ width: safeScore + "%" }} /></div>
+      <small>{weight}% weight · contributes {(safeScore * weight / 100).toFixed(1)} points</small>
+    </div>
   );
 }
 
