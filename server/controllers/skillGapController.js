@@ -1,8 +1,6 @@
 const Job = require("../models/Job");
 const User = require("../models/User");
 
-const MAX_JOBS_TO_ANALYSE = 500;
-
 // Generic job terms and ambiguous fragments are not useful standalone skills.
 // Specific technologies such as Apache Kafka and Apache Spark remain valid.
 const EXCLUDED_SKILL_TERMS = new Set([
@@ -145,7 +143,6 @@ const getSkillGapOverview = async (req, res) => {
       Job.find(validJobQuery)
         .select("title company description requirements qualifications skills detectedJobSkills location source scrapedAt jobUrl")
         .sort({ postedDate: -1, scrapedAt: -1 })
-        .limit(MAX_JOBS_TO_ANALYSE)
         .lean(),
       Job.countDocuments(validJobQuery),
     ]);
@@ -168,31 +165,22 @@ const getSkillGapOverview = async (req, res) => {
       }
     }
 
-    const maxDemand = Math.max(1, ...Array.from(skillStats.values()).map((item) => item.jobCount));
-    const missingSkills = Array.from(skillStats.values()).map((item) => {
-      const demandScore = Math.round((item.jobCount / maxDemand) * 100);
-      const importanceScore = Math.round(item.jobCount ? (item.requiredCount / item.jobCount) * 100 : 0);
-      const roleRelevanceScore = Math.round(item.jobCount ? item.relevanceTotal / item.jobCount : 0);
-      const priorityScore = Math.round(
-        demandScore * 0.5 + importanceScore * 0.3 + roleRelevanceScore * 0.2
-      );
-
-      return {
-        name: item.name,
-        jobCount: item.jobCount,
-        requiredCount: item.requiredCount,
-        priorityScore,
-        priority: priorityScore >= 65 ? "High" : priorityScore >= 35 ? "Medium" : "Low",
-        scoreBreakdown: {
-          demand: demandScore,
-          importance: importanceScore,
-          roleRelevance: roleRelevanceScore,
-          weights: { demand: 50, importance: 30, roleRelevance: 20 },
-        },
-      };
-    }).sort((a, b) =>
-      b.priorityScore - a.priorityScore ||
+    // Rank skills using observed dataset evidence, without fixed weights or score thresholds.
+    // Order: number of jobs mentioning the skill, requirement-signal rate, then average role relevance.
+    const missingSkills = Array.from(skillStats.values()).map((item) => ({
+      name: item.name,
+      jobCount: item.jobCount,
+      requiredCount: item.requiredCount,
+      requirementRate: item.jobCount
+        ? Math.round((item.requiredCount / item.jobCount) * 100)
+        : 0,
+      averageRoleRelevance: item.jobCount
+        ? Math.round(item.relevanceTotal / item.jobCount)
+        : 0,
+    })).sort((a, b) =>
       b.jobCount - a.jobCount ||
+      b.requirementRate - a.requirementRate ||
+      b.averageRoleRelevance - a.averageRoleRelevance ||
       a.name.localeCompare(b.name)
     );
 
@@ -228,7 +216,6 @@ const getSkillGapOverview = async (req, res) => {
         totalAvailableJobs,
         matchedSkills: matchedSkills.length,
         missingSkills: missingSkills.length,
-        highPrioritySkills: missingSkills.filter((skill) => skill.priority === "High").length,
         coverage,
         matchedOccurrences,
         totalSkillOccurrences: totalOccurrences,
