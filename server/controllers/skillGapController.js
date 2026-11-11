@@ -82,28 +82,29 @@ const getRoleRelevance = (job, role) => {
   ));
 };
 
-// A requirement signal only counts when it occurs close to the skill mention.
+// Count requirement evidence only when the signal is grammatically tied to
+// this skill in the same short phrase (not merely somewhere in the description).
 const isExplicitlyRequired = (skill, job) => {
   const requirementText = [
     clean(job.requirements),
     clean(job.qualifications),
     clean(job.description),
-  ].filter(Boolean).join("\n");
+  ].filter(Boolean).join("\\n");
   if (!requirementText) return false;
 
-  const skillPattern = new RegExp(
-    "(^|[^a-z0-9+#])" + escapeRegex(skill) + "([^a-z0-9+#]|$)",
-    "ig"
+  const escapedSkill = escapeRegex(skill);
+  const signalBeforeSkill = new RegExp(
+    "(?:required|must[- ]have|mandatory|essential|proficient(?: in)?|strong knowledge of|experience with|experience in|knowledge of|familiarity with|hands-on experience(?: with)?)(?:[^.!?;\\n]{0,45})\\b" +
+      escapedSkill + "\\b",
+    "i"
   );
-  const signalPattern = /\b(required|must[- ]have|mandatory|essential|proficient|strong knowledge of|experience with|experience in|knowledge of|familiarity with|hands-on experience)\b/i;
+  const signalAfterSkill = new RegExp(
+    "\\b" + escapedSkill +
+      "\\b(?:[^.!?;\\n]{0,35})(?:(?:is|are)\\s+)?(?:required|mandatory|essential|must[- ]have)",
+    "i"
+  );
 
-  let match;
-  while ((match = skillPattern.exec(requirementText)) !== null) {
-    const start = Math.max(0, match.index - 75);
-    const end = Math.min(requirementText.length, match.index + match[0].length + 75);
-    if (signalPattern.test(requirementText.slice(start, end))) return true;
-  }
-  return false;
+  return signalBeforeSkill.test(requirementText) || signalAfterSkill.test(requirementText);
 };
 
 const getJobSkills = (job) => uniqueSkills([
