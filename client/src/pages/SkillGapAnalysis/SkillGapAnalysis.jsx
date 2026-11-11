@@ -203,21 +203,13 @@ function SkillGapAnalysis() {
                           <span className="priority-rank">{String(priorityPage * priorityPageSize + index + 1).padStart(2, "0")}</span>
                           <div className="priority-skill-main">
                             <strong>{skill.name}</strong>
-                            <span>Found in {skill.jobCount} {skill.jobCount === 1 ? "job" : "jobs"} · Requirement evidence in {skill.requiredCount} {skill.requiredCount === 1 ? "job" : "jobs"}</span>
+                            <span>Found in {skill.jobCount} {skill.jobCount === 1 ? "job listing" : "job listings"}</span>
+                            <span className="priority-requirement-count">
+                              Listed as required or preferred: {skill.requiredCount} of {skill.jobCount}
+                            </span>
                           </div>
-                          <div className="priority-score"><strong>{skill.jobCount}</strong><span>{skill.jobCount === 1 ? "job" : "jobs"}</span></div>
                           <span className={`priority-badge ${(skill.priority || "Low").toLowerCase()}`}>{skill.priority || "Low"}</span>
                         </div>
-                        <details className="priority-breakdown">
-                          <summary>View supporting evidence</summary>
-                          <div className="breakdown-grid">
-                            <BreakdownItem label="Jobs mentioning this skill" value={skill.jobCount} />
-                            <BreakdownItem label="Jobs with requirement evidence" value={skill.requiredCount} />
-                            <BreakdownItem label="Share of mentioning jobs with requirement evidence" value={skill.requirementRate + "%"} />
-                            <BreakdownItem label="Average role relevance" value={skill.averageRoleRelevance + "%"} />
-                          </div>
-                          <p className="breakdown-note">"Jobs mentioning this skill" counts each analysed listing once, even if the skill is repeated in its text. "Jobs with requirement evidence" counts listings where requirement wording was found close to the skill name. A zero means no such wording was detected; it does not prove the skill is unimportant. Priority labels are relative to the current results: High is the top 25% of ranked skills, Medium the next 50%, and Low the remaining 25%.</p>
-                        </details>
                       </div>
                     ))}
                   </div>
@@ -257,12 +249,5 @@ function SkillGapAnalysis() {
   );
 }
 
-function BreakdownItem({ label, value = 0 }) {
-  return (
-    <div className="breakdown-item">
-      <div><span>{label}</span><strong>{value}</strong></div>
-    </div>
-  );
-}
 
 export default SkillGapAnalysis;
