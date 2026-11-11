@@ -18,6 +18,7 @@ const profilePhotoRoutes = require("./routes/profilePhotoRoutes");
 const jobRoutes = require("./routes/jobRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const skillGapRoutes = require("./routes/skillGapRoutes");
+const careerRoadmapRoutes = require("./routes/careerRoadmapRoutes");
 
 const connectDB = require("./config/db");
 connectDB();
@@ -41,6 +42,7 @@ app.use("/api/profile-photo", profilePhotoRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/skill-gap", skillGapRoutes);
+app.use("/api/career-roadmap", careerRoadmapRoutes);
 
 app.use((error, req, res, next) => {
   console.error("Express error:", error);
