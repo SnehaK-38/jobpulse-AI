@@ -107,10 +107,70 @@ const isExplicitlyRequired = (skill, job) => {
   return signalBeforeSkill.test(requirementText) || signalAfterSkill.test(requirementText);
 };
 
-const getJobSkills = (job) => uniqueSkills([
-  ...(Array.isArray(job.skills) ? job.skills : []),
-  ...(Array.isArray(job.detectedJobSkills) ? job.detectedJobSkills : []),
-]);
+// A role should be compared against the skills stated in the complete listing,
+// not only provider-populated skill arrays (which are often empty or incomplete).
+const getJobSkills = (job) => {
+  const skills = uniqueSkills([
+    ...(Array.isArray(job.skills) ? job.skills : []),
+    ...(Array.isArray(job.detectedJobSkills) ? job.detectedJobSkills : []),
+  ]);
+
+  const searchableText = [
+    job.title,
+    job.description,
+    job.requirements,
+    job.qualifications,
+    job.responsibilities,
+  ].map(clean).filter(Boolean).join(" ").toLowerCase();
+
+  for (const skill of TECHNICAL_SKILLS) {
+    // Short tokens such as C, R and Go are too ambiguous to extract safely
+    // from long descriptions. They are still accepted when explicitly tagged
+    // in the job's structured skills arrays above.
+    if (skill.length < 3) continue;
+    const pattern = escapeRegex(skill).replace(/\\\s+/g, "\\\\s+");
+    const matcher = new RegExp("(^|[^a-z0-9])" + pattern + "(?=$|[^a-z0-9])", "i");
+    if (matcher.test(searchableText)) {
+      const key = canonicalSkill(skill);
+      if (!skills.has(key)) skills.set(key, skill);
+    }
+  }
+
+  return skills;
+};
+
+// Exclude unrelated roles when a role-specific term is available. The Job
+// Search endpoint already retrieves/ranks against the saved target role; this
+// second check prevents generic words such as "developer" from being enough.
+const isRelevantToTargetRole = (job, role) => {
+  const genericTerms = new Set([
+    "developer", "engineer", "software", "programmer", "specialist",
+    "analyst", "architect", "intern", "senior", "junior", "associate",
+  ]);
+  const roleTerms = clean(role).toLowerCase()
+    .split(/[^a-z0-9+#.]+/)
+    .filter((term) => term.length > 2 && !genericTerms.has(term));
+
+  if (!roleTerms.length) return true;
+
+  const title = clean(job.title).toLowerCase();
+  const context = [
+    title,
+    clean(job.description),
+    clean(job.requirements),
+    clean(job.qualifications),
+  ].join(" ").toLowerCase();
+
+  const matchesTerm = (text, term) => {
+    const escaped = escapeRegex(term);
+    return new RegExp("(^|[^a-z0-9])" + escaped + "(?=$|[^a-z0-9])", "i").test(text);
+  };
+
+  // Prefer a role-specific term in the job title. If the title is generic,
+  // allow a clear role-specific mention in the listing text.
+  return roleTerms.some((term) => matchesTerm(title, term)) ||
+    roleTerms.some((term) => matchesTerm(context, term));
+};
 
 const getSkillGapOverview = async (req, res) => {
   try {
@@ -143,15 +203,19 @@ const getSkillGapOverview = async (req, res) => {
     const role = clean(user.targetRole);
 
     // Analyse the exact stored job records returned by the existing Job Search API.
-    const jobs = await Job.find({
+    const retrievedJobs = await Job.find({
       _id: { $in: jobIds },
       $nor: [
         { jobUrl: /jobpulse_id=/i },
         { jobUrl: /linkedin\.com\/jobs\/search/i },
       ],
     })
-      .select("title company description requirements qualifications skills detectedJobSkills location source scrapedAt jobUrl")
+      .select("title company description requirements qualifications responsibilities skills detectedJobSkills location source scrapedAt jobUrl")
       .lean();
+
+    // Use the currently saved target role for this request, so changing the
+    // role and refreshing Job Search produces a new role-specific analysis.
+    const jobs = retrievedJobs.filter((job) => isRelevantToTargetRole(job, role));
 
     const skillStats = new Map();
     for (const job of jobs) {
