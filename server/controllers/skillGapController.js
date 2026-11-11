@@ -19,7 +19,7 @@ const TECHNICAL_SKILLS = new Set([
 const clean = (value) => String(value ?? "").trim();
 
 const canonicalSkill = (value) => {
-  const skill = clean(value).toLowerCase().replace(/\\s+/g, " ").replace(/\\s*\\.\\s*/g, ".");
+  const skill = clean(value).toLowerCase().replace(/\s+/g, " ").replace(/\s*\.\s*/g, ".");
   const aliases = {
     js: "javascript",
     "javascript es6": "javascript",
@@ -112,15 +112,6 @@ const getJobSkills = (job) => uniqueSkills([
   ...(Array.isArray(job.detectedJobSkills) ? job.detectedJobSkills : []),
 ]);
 
-const getPriorityLevel = (jobCount, sortedJobCounts) => {
-  if (!sortedJobCounts.length) return "Low";
-  const median = sortedJobCounts[Math.floor((sortedJobCounts.length - 1) / 2)];
-  const upperQuartile = sortedJobCounts[Math.floor((sortedJobCounts.length - 1) * 0.75)];
-  if (jobCount >= upperQuartile) return "High";
-  if (jobCount >= median) return "Medium";
-  return "Low";
-};
-
 const getSkillGapOverview = async (req, res) => {
   try {
     const userId = req.user?._id || req.user?.id || req.user?.userId;
@@ -177,11 +168,7 @@ const getSkillGapOverview = async (req, res) => {
       }
     }
 
-    const sortedJobCounts = Array.from(skillStats.values())
-      .map((item) => item.jobCount)
-      .sort((a, b) => a - b);
-
-    const missingSkills = Array.from(skillStats.values()).map((item) => ({
+    const rankedMissingSkills = Array.from(skillStats.values()).map((item) => ({
       name: item.name,
       jobCount: item.jobCount,
       requiredCount: item.requiredCount,
@@ -191,13 +178,25 @@ const getSkillGapOverview = async (req, res) => {
       averageRoleRelevance: item.jobCount
         ? Math.round(item.relevanceTotal / item.jobCount)
         : 0,
-      priority: getPriorityLevel(item.jobCount, sortedJobCounts),
     })).sort((a, b) =>
       b.jobCount - a.jobCount ||
       b.requiredCount - a.requiredCount ||
       b.averageRoleRelevance - a.averageRoleRelevance ||
       a.name.localeCompare(b.name)
     );
+
+    // Assign High / Medium / Low by relative rank in this live result set.
+    // This avoids fixed score weights and absolute numeric cut-offs.
+    const highPriorityEnd = Math.ceil(rankedMissingSkills.length * 0.25);
+    const mediumPriorityEnd = Math.ceil(rankedMissingSkills.length * 0.75);
+    const missingSkills = rankedMissingSkills.map((skill, index) => ({
+      ...skill,
+      priority: index < highPriorityEnd
+        ? "High"
+        : index < mediumPriorityEnd
+          ? "Medium"
+          : "Low",
+    }));
 
     const allJobSkillKeys = new Set();
     let matchedOccurrences = 0;
