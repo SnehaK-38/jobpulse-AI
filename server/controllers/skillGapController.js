@@ -18,7 +18,7 @@ const EXCLUDED_SKILL_TERMS = new Set([
   "manager", "management", "architect", "analyst", "specialist",
   "consultant", "director", "executive", "coordinator",
   "professional", "fresher", "years", "year", "experience",
-  "role", "position", "job", "candidate", "team",
+  "role", "position", "job", "candidate", "team", "dev", "backend", "frontend", "full stack", "fullstack", "software", "technical", "technology", "technologies", "programming", "computer science", "information technology", "skills", "knowledge", "tools",
 ]);
 
 const clean = (value) => String(value ?? "").trim();
@@ -56,7 +56,7 @@ const isUsefulSkill = (value) => {
   if (!key || key.length < 2 || EXCLUDED_SKILL_TERMS.has(key)) return false;
   if (/^(?:[0-9]+|[a-z])$/.test(key)) return false;
   if (key.split(" ").length > 5) return false;
-  if (/\b(engineer|engineering|developer|development|senior|junior|lead|staff|principal|associate|intern|manager|management|architect|analyst|specialist|consultant|director|executive|coordinator|fresher|experience|years?)\b/i.test(key)) return false;
+  if (/\b(engineer|engineering|developer|development|senior|junior|lead|staff|principal|associate|intern|manager|management|architect|analyst|specialist|consultant|director|executive|coordinator|fresher|experience|years?|backend|frontend|fullstack|software|technical|technology|technologies|programming)\b/i.test(key)) return false;
   return true;
 };
 
