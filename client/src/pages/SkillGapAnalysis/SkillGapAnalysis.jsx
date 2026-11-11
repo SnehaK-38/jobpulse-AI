@@ -58,9 +58,7 @@ function SkillGapAnalysis() {
   );
   const matchedSkills = data?.matchedSkills || [];
   const coverage = Number(summary.coverage || 0);
-  const totalOccurrences = Number(summary.totalSkillOccurrences || 0);
-  const matchedOccurrences = Number(summary.matchedOccurrences || 0);
-  const missingOccurrences = Number(summary.missingOccurrences || 0);
+  const totalDistinctJobSkills = Number(summary.totalDistinctJobSkills || 0);
 
   return (
     <>
@@ -130,14 +128,14 @@ function SkillGapAnalysis() {
                 <h2>{profile.targetRole || "Target role not set"}</h2>
                 <p>Your profile skills were compared with the skills found in {summary.jobsAnalysed ?? 0} role-related job listings.</p>
                 <div className="hero-pills">
-                  <span><i className="legend-dot matched-dot" /> {matchedOccurrences} matched occurrences</span>
-                  <span><i className="legend-dot missing-dot" /> {missingOccurrences} missing occurrences</span>
+                  <span><i className="legend-dot matched-dot" /> {matchedSkills.length} distinct matched skills</span>
+                  <span><i className="legend-dot missing-dot" /> {missingSkills.length} distinct missing skills</span>
                 </div>
               </div>
               <div className="hero-total">
-                <span>Total skill occurrences</span>
-                <strong>{totalOccurrences}</strong>
-                <small>Across the analysed listings</small>
+                <span>Distinct skills found in jobs</span>
+                <strong>{totalDistinctJobSkills}</strong>
+                <small>Each skill counted once</small>
               </div>
             </section>
 
@@ -167,16 +165,16 @@ function SkillGapAnalysis() {
                 </div>
                 <div className="gap-bars">
                   <div className="gap-bar-column">
-                    <div className="gap-bar-value">{matchedOccurrences}</div>
-                    <div className="gap-bar-track matched-track"><span style={{ height: totalOccurrences ? (matchedOccurrences / totalOccurrences) * 100 + "%" : "0%" }} /></div>
+                    <div className="gap-bar-value">{matchedSkills.length}</div>
+                    <div className="gap-bar-track matched-track"><span style={{ height: totalDistinctJobSkills ? (matchedSkills.length / totalDistinctJobSkills) * 100 + "%" : "0%" }} /></div>
                     <strong>Matched</strong>
-                    <small>{matchedSkills.length} distinct skills</small>
+                    <small>Distinct skills</small>
                   </div>
                   <div className="gap-bar-column">
-                    <div className="gap-bar-value">{missingOccurrences}</div>
-                    <div className="gap-bar-track missing-track"><span style={{ height: totalOccurrences ? (missingOccurrences / totalOccurrences) * 100 + "%" : "0%" }} /></div>
+                    <div className="gap-bar-value">{missingSkills.length}</div>
+                    <div className="gap-bar-track missing-track"><span style={{ height: totalDistinctJobSkills ? (missingSkills.length / totalDistinctJobSkills) * 100 + "%" : "0%" }} /></div>
                     <strong>Missing</strong>
-                    <small>{missingSkills.length} distinct skills</small>
+                    <small>Distinct skills</small>
                   </div>
                 </div>
                 <div className="coverage-track"><span style={{ width: coverage + "%" }} /></div>
@@ -186,7 +184,7 @@ function SkillGapAnalysis() {
                 </div>
                 <div className="coverage-explainer">
                   <strong>How to read this</strong>
-                  <p>{matchedOccurrences} of {totalOccurrences} skill occurrences across the analysed jobs match skills in your profile. Repeated skills in different jobs count as separate occurrences.</p>
+                  <p>{matchedSkills.length} of {totalDistinctJobSkills} distinct skills found across the analysed job listings are already in your profile. Each normalized skill is counted once, even when it appears in multiple jobs.</p>
                 </div>
                 <div className="target-role"><span>Target role</span><strong>{profile.targetRole || "Not set in profile"}</strong></div>
               </article>
@@ -196,7 +194,7 @@ function SkillGapAnalysis() {
                   <div><span className="panel-kicker">WHAT TO LEARN NEXT</span><h2>Priority skills</h2></div>
                   <span className="priority-icon"><TrendingUp size={18} /></span>
                 </div>
-                <p className="panel-description">Missing technologies ordered by how often they appear, requirement evidence and relevance to your target role.</p>
+                <p className="panel-description">Missing technical skills ranked by the number of job listings containing them, requirement evidence and relevance to your target role.</p>
                 {missingSkills.length ? (
                   <div className="priority-list">
                     {visiblePrioritySkills.map((skill, index) => (
@@ -205,7 +203,7 @@ function SkillGapAnalysis() {
                           <span className="priority-rank">{String(priorityPage * priorityPageSize + index + 1).padStart(2, "0")}</span>
                           <div className="priority-skill-main">
                             <strong>{skill.name}</strong>
-                            <span>Appears in {skill.jobCount} {skill.jobCount === 1 ? "job" : "jobs"} · {skill.requiredCount} nearby requirement signals</span>
+                            <span>Found in {skill.jobCount} {skill.jobCount === 1 ? "job" : "jobs"} · Requirement evidence in {skill.requiredCount} {skill.requiredCount === 1 ? "job" : "jobs"}</span>
                           </div>
                           <div className="priority-score"><strong>{skill.jobCount}</strong><span>{skill.jobCount === 1 ? "job" : "jobs"}</span></div>
                           <span className={`priority-badge ${(skill.priority || "Low").toLowerCase()}`}>{skill.priority || "Low"}</span>
@@ -214,11 +212,11 @@ function SkillGapAnalysis() {
                           <summary>View supporting evidence</summary>
                           <div className="breakdown-grid">
                             <BreakdownItem label="Jobs mentioning this skill" value={skill.jobCount} />
-                            <BreakdownItem label="Nearby requirement signals" value={skill.requiredCount} />
-                            <BreakdownItem label="Requirement signal rate" value={skill.requirementRate + "%"} />
+                            <BreakdownItem label="Jobs with requirement evidence" value={skill.requiredCount} />
+                            <BreakdownItem label="Share of mentioning jobs with requirement evidence" value={skill.requirementRate + "%"} />
                             <BreakdownItem label="Average role relevance" value={skill.averageRoleRelevance + "%"} />
                           </div>
-                          <p className="breakdown-note">These are observed counts and averages from the analysed job listings. Priority labels are relative to the current results: High is at or above the upper quartile of job demand, Medium is at or above the median, and Low is below the median.</p>
+                          <p className="breakdown-note">"Jobs mentioning this skill" counts each analysed listing once, even if the skill is repeated in its text. "Jobs with requirement evidence" counts listings where requirement wording was found close to the skill name. A zero means no such wording was detected; it does not prove the skill is unimportant. Priority labels are relative to the current results: High is the top 25% of ranked skills, Medium the next 50%, and Low the remaining 25%.</p>
                         </details>
                       </div>
                     ))}
@@ -248,7 +246,7 @@ function SkillGapAnalysis() {
                 <div className="method-icon"><Activity size={18} /></div>
                 <div>
                   <strong>How skills are ordered</strong>
-                  <p>Skills are ranked using observed data: how many analysed jobs mention each skill, how often it appears with a nearby requirement signal, and the average relevance of those jobs to your target role. Priority labels are calculated from the distribution of skill demand in the current job results, not fixed score cut-offs.</p>
+                  <p>Each skill is counted at most once per job listing. Ranking uses the number of listings mentioning the skill, the number with requirement evidence close to the skill name, and the average relevance of those listings to your target role. High, Medium and Low labels are assigned by relative rank within the current results.</p>
                 </div>
               </div>
             </section>
