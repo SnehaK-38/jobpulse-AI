@@ -62,3 +62,15 @@
   .jc-shortlist-card { align-items:flex-start; flex-direction:column; }
   .jc-shortlist-actions { flex-wrap:wrap; }
 }
+
+
+.jc-card-actions button.jc-remove-saved {
+  border-color:#f1d9dd;
+  color:#bf5260;
+}
+.jc-saved-date {
+  display:block;
+  margin-top:8px;
+  color:#a0a8b7;
+  font-size:10px;
+}
