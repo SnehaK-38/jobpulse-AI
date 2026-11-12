@@ -12,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { getDashboardJobs } from "../../services/dashboardService";
+import { getProfile } from "../../services/profileService";
 import {
   addJobToShortlist,
   getJobShortlist,
@@ -32,6 +33,7 @@ const getJobUrl = (job) => job.applicationUrl || job.jobUrlDirect || job.jobUrl 
 function JobComparison({ analysis }) {
   const [jobs, setJobs] = useState([]);
   const [shortlist, setShortlist] = useState([]);
+  const [savedProfileSkills, setSavedProfileSkills] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -43,12 +45,18 @@ function JobComparison({ analysis }) {
     try {
       setLoading(true);
       setError("");
-      const [jobResult, shortlistResult] = await Promise.all([
+      const [jobResult, shortlistResult, profileResult] = await Promise.all([
         getDashboardJobs({ search_term: "", location: "", limit: 200 }),
         getJobShortlist(),
+        getProfile(),
       ]);
       setJobs(Array.isArray(jobResult?.jobs) ? jobResult.jobs : []);
       setShortlist(Array.isArray(shortlistResult?.jobs) ? shortlistResult.jobs : []);
+      const user = profileResult?.user || {};
+      setSavedProfileSkills([
+        ...(Array.isArray(user.resumeSkills) ? user.resumeSkills : []),
+        ...(Array.isArray(user.skills) ? user.skills : []),
+      ]);
     } catch (err) {
       setError(err?.response?.data?.message || "Unable to load jobs and your shortlist. Please try again.");
     } finally {
@@ -61,8 +69,8 @@ function JobComparison({ analysis }) {
   }, [loadData]);
 
   const profileSkills = useMemo(() => new Set(
-    (analysis?.profile?.currentSkills || []).map(normalize)
-  ), [analysis]);
+    (savedProfileSkills.length ? savedProfileSkills : (analysis?.profile?.currentSkills || [])).map(normalize)
+  ), [savedProfileSkills, analysis]);
 
   const shortlistIds = useMemo(
     () => new Set(shortlist.map((job) => String(job._id))),
