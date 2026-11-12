@@ -69,10 +69,8 @@ function SkillGapAnalysis() {
         <section className="skill-gap-heading">
           <div>
             <span className="skill-gap-eyebrow"><Sparkles size={14} /> CAREER INTELLIGENCE</span>
-            <h1>{activeView === "overview" ? "Skill Gap Analysis" : "Job Comparison & Shortlisting"}</h1>
-            <p>{activeView === "overview"
-              ? "See how your saved skills compare with the skills appearing in jobs related to your target role."
-              : "Compare real job opportunities against your profile and save the ones you want to revisit."}</p>
+            <h1>Career Tools</h1>
+            <p>Understand your skill gaps and compare job opportunities to make informed career decisions.</p>
           </div>
           {activeView === "overview" && (
             <button className="skill-gap-refresh" onClick={loadAnalysis} disabled={loading}>
@@ -82,12 +80,12 @@ function SkillGapAnalysis() {
           )}
         </section>
 
-        <nav className="skill-gap-view-tabs" aria-label="Career intelligence views">
+        <nav className="skill-gap-view-tabs" aria-label="Career tools sections">
           <button type="button" className={activeView === "overview" ? "active" : ""} onClick={() => setActiveView("overview")} aria-current={activeView === "overview" ? "page" : undefined}>
-            <Layers3 size={15} /> Skill Gap Overview
+            <Layers3 size={15} /> Skill Gap Analysis
           </button>
           <button type="button" className={activeView === "comparison" ? "active" : ""} onClick={() => setActiveView("comparison")} aria-current={activeView === "comparison" ? "page" : undefined}>
-            <BriefcaseBusiness size={15} /> Compare & Shortlist
+            <BriefcaseBusiness size={15} /> Job Comparison & Shortlisting
           </button>
         </nav>
 
