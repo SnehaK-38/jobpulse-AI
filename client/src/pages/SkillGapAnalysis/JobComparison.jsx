@@ -21,7 +21,29 @@ import {
 import "./JobComparison.css";
 
 const clean = (value) => String(value ?? "").trim();
-const normalize = (value) => clean(value).toLowerCase().replace(/\s+/g, " ");
+const normalize = (value) => {
+  const skill = clean(value).toLowerCase().replace(/\\s+/g, " ");
+  const aliases = {
+    js: "javascript",
+    "javascript es6": "javascript",
+    "node.js": "nodejs",
+    "node js": "nodejs",
+    "react.js": "react",
+    reactjs: "react",
+    "mongo db": "mongodb",
+    mongo: "mongodb",
+    postgres: "postgresql",
+    ml: "machine learning",
+    ai: "artificial intelligence",
+    express: "express.js",
+    "express js": "express.js",
+    tailwind: "tailwind css",
+    powerbi: "power bi",
+    "scikit learn": "scikit-learn",
+    "restful api": "rest api",
+  };
+  return aliases[skill] || skill;
+};
 
 const getSkills = (job) => [...new Set([
   ...(Array.isArray(job.skills) ? job.skills : []),
