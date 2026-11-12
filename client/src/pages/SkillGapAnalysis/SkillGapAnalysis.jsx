@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Activity,
   AlertCircle,
@@ -25,7 +26,12 @@ function SkillGapAnalysis() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [priorityPage, setPriorityPage] = useState(0);
-  const [activeView, setActiveView] = useState("overview");
+  const [searchParams] = useSearchParams();
+  const [activeView, setActiveView] = useState(searchParams.get("tab") === "saved" ? "comparison" : "overview");
+
+  useEffect(() => {
+    setActiveView(searchParams.get("tab") === "saved" ? "comparison" : "overview");
+  }, [searchParams]);
 
   const loadAnalysis = useCallback(async () => {
     try {
