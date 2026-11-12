@@ -19,6 +19,7 @@ function App() {
       <Route path="/resume-upload" element={<ResumeUpload />} />
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/job-details" element={<JobDetails />} />
+      <Route path="/career-tools" element={<SkillGapAnalysis />} />
       <Route path="/skill-gap" element={<SkillGapAnalysis />} />
     </Routes>
   );
