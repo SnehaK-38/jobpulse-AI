@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  Bookmark,
   BookmarkCheck,
   BriefcaseBusiness,
   Check,
@@ -8,21 +7,15 @@ import {
   MapPin,
   RefreshCw,
   Scale,
-  Search,
   X,
 } from "lucide-react";
-import { getDashboardJobs } from "../../services/dashboardService";
 import { getProfile } from "../../services/profileService";
-import {
-  addJobToShortlist,
-  getJobShortlist,
-  removeJobFromShortlist,
-} from "../../services/jobShortlistService";
+import { getJobShortlist, removeJobFromShortlist } from "../../services/jobShortlistService";
 import "./JobComparison.css";
 
 const clean = (value) => String(value ?? "").trim();
 const normalize = (value) => {
-  const skill = clean(value).toLowerCase().replace(/\s+/g, " ");
+  const skill = clean(value).toLowerCase().replace(/\\s+/g, " ");
   const aliases = {
     js: "javascript",
     "javascript es6": "javascript",
@@ -53,11 +46,9 @@ const getSkills = (job) => [...new Set([
 const getJobUrl = (job) => job.applicationUrl || job.jobUrlDirect || job.jobUrl || "";
 
 function JobComparison({ analysis }) {
-  const [jobs, setJobs] = useState([]);
   const [shortlist, setShortlist] = useState([]);
   const [savedProfileSkills, setSavedProfileSkills] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
-  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState("");
   const [error, setError] = useState("");
@@ -67,20 +58,20 @@ function JobComparison({ analysis }) {
     try {
       setLoading(true);
       setError("");
-      const [jobResult, shortlistResult, profileResult] = await Promise.all([
-        getDashboardJobs({ search_term: "", location: "", limit: 200 }),
+      const [shortlistResult, profileResult] = await Promise.all([
         getJobShortlist(),
         getProfile(),
       ]);
-      setJobs(Array.isArray(jobResult?.jobs) ? jobResult.jobs : []);
-      setShortlist(Array.isArray(shortlistResult?.jobs) ? shortlistResult.jobs : []);
+      const savedJobs = Array.isArray(shortlistResult?.jobs) ? shortlistResult.jobs : [];
+      setShortlist(savedJobs);
+      setSelectedIds((current) => current.filter((id) => savedJobs.some((job) => String(job._id) === id)));
       const user = profileResult?.user || {};
       setSavedProfileSkills([
         ...(Array.isArray(user.resumeSkills) ? user.resumeSkills : []),
         ...(Array.isArray(user.skills) ? user.skills : []),
       ]);
     } catch (err) {
-      setError(err?.response?.data?.message || "Unable to load jobs and your shortlist. Please try again.");
+      setError(err?.response?.data?.message || "Unable to load your saved jobs. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -94,23 +85,9 @@ function JobComparison({ analysis }) {
     (savedProfileSkills.length ? savedProfileSkills : (analysis?.profile?.currentSkills || [])).map(normalize)
   ), [savedProfileSkills, analysis]);
 
-  const shortlistIds = useMemo(
-    () => new Set(shortlist.map((job) => String(job._id))),
-    [shortlist]
-  );
-
-  const filteredJobs = useMemo(() => {
-    const term = normalize(search);
-    if (!term) return jobs;
-    return jobs.filter((job) =>
-      [job.title, job.company, job.location, job.source, ...getSkills(job)]
-        .some((value) => normalize(value).includes(term))
-    );
-  }, [jobs, search]);
-
   const selectedJobs = useMemo(
-    () => selectedIds.map((id) => jobs.find((job) => String(job._id) === id)).filter(Boolean),
-    [jobs, selectedIds]
+    () => selectedIds.map((id) => shortlist.find((job) => String(job._id) === id)).filter(Boolean),
+    [shortlist, selectedIds]
   );
 
   const toggleCompare = (jobId) => {
@@ -118,7 +95,7 @@ function JobComparison({ analysis }) {
     setSelectedIds((current) => {
       if (current.includes(id)) return current.filter((item) => item !== id);
       if (current.length >= 4) {
-        setNotice("You can compare up to 4 jobs at a time.");
+        setNotice("You can compare up to 4 saved jobs at a time.");
         return current;
       }
       setNotice("");
@@ -126,86 +103,38 @@ function JobComparison({ analysis }) {
     });
   };
 
-  const toggleShortlist = async (job) => {
+  const removeSavedJob = async (job) => {
     const id = String(job._id);
     try {
       setSavingId(id);
       setError("");
-      if (shortlistIds.has(id)) {
-        await removeJobFromShortlist(id);
-        setShortlist((current) => current.filter((item) => String(item._id) !== id));
-        setNotice("Job removed from your shortlist.");
-      } else {
-        await addJobToShortlist(id);
-        setShortlist((current) => [
-          { _id: id, ...job, savedAt: new Date().toISOString(), listingAvailable: true },
-          ...current,
-        ]);
-        setNotice("Job added to your shortlist.");
-      }
+      await removeJobFromShortlist(id);
+      setShortlist((current) => current.filter((item) => String(item._id) !== id));
+      setSelectedIds((current) => current.filter((item) => item !== id));
+      setNotice("Job removed from your saved jobs.");
     } catch (err) {
-      setError(err?.response?.data?.message || "Unable to update your shortlist.");
+      setError(err?.response?.data?.message || "Unable to remove this saved job.");
     } finally {
       setSavingId("");
     }
-  };
-
-  const renderJobCard = (job) => {
-    const id = String(job._id);
-    const isSaved = shortlistIds.has(id);
-    const isSelected = selectedIds.includes(id);
-    return (
-      <article className="jc-job-card" key={id}>
-        <div className="jc-job-main">
-          <span className="jc-source">{job.source || "Job listing"}</span>
-          <h3>{job.title || "Untitled role"}</h3>
-          <p className="jc-company">{job.company || "Company not specified"}</p>
-          <div className="jc-meta">
-            <span><MapPin size={14} />{job.location || "Location not specified"}</span>
-            <span><BriefcaseBusiness size={14} />{job.workMode || (job.isRemote ? "Remote" : "Work mode not specified")}</span>
-          </div>
-          <div className="jc-skill-list">
-            {getSkills(job).slice(0, 8).map((skill) => (
-              <span key={skill} className={profileSkills.has(normalize(skill)) ? "matched" : ""}>{skill}</span>
-            ))}
-            {getSkills(job).length > 8 && <small>+{getSkills(job).length - 8} more</small>}
-            {!getSkills(job).length && <small>Skills are not separately listed by this job source.</small>}
-          </div>
-        </div>
-        <div className="jc-card-actions">
-          <button type="button" className={isSelected ? "jc-selected" : ""} onClick={() => toggleCompare(id)}>
-            {isSelected ? <Check size={15} /> : <Scale size={15} />}
-            {isSelected ? "Selected" : "Compare"}
-          </button>
-          <button type="button" className={isSaved ? "jc-saved" : ""} disabled={savingId === id} onClick={() => toggleShortlist(job)}>
-            {isSaved ? <BookmarkCheck size={15} /> : <Bookmark size={15} />}
-            {savingId === id ? "Saving..." : isSaved ? "Shortlisted" : "Shortlist"}
-          </button>
-          {getJobUrl(job) && (
-            <a href={getJobUrl(job)} target="_blank" rel="noreferrer"><ExternalLink size={14} /> View job</a>
-          )}
-        </div>
-      </article>
-    );
   };
 
   return (
     <section className="job-comparison">
       <div className="jc-intro">
         <div>
-          <span className="jc-kicker"><Scale size={14} /> JOB DECISION TOOLS</span>
-          <h2>Compare & shortlist jobs</h2>
-          <p>Choose up to four real job listings to compare their requirements with your profile, then save opportunities to your personal shortlist.</p>
+          <span className="jc-kicker"><BookmarkCheck size={14} /> YOUR CAREER SAVES</span>
+          <h2>Saved Jobs</h2>
+          <p>Your shortlisted opportunities are collected here. Select 2–4 saved jobs to compare their requirements with your profile.</p>
         </div>
         <button type="button" className="jc-refresh" onClick={loadData} disabled={loading}>
-          <RefreshCw size={15} className={loading ? "is-spinning" : ""} /> Refresh jobs
+          <RefreshCw size={15} className={loading ? "is-spinning" : ""} /> Refresh saved jobs
         </button>
       </div>
 
       <div className="jc-summary-row">
-        <div><strong>{jobs.length}</strong><span>Available listings</span></div>
-        <div><strong>{selectedIds.length}/4</strong><span>Selected to compare</span></div>
         <div><strong>{shortlist.length}</strong><span>Saved jobs</span></div>
+        <div><strong>{selectedIds.length}/4</strong><span>Selected to compare</span></div>
       </div>
 
       {error && <div className="jc-alert" role="alert">{error}</div>}
@@ -213,26 +142,62 @@ function JobComparison({ analysis }) {
 
       <section className="jc-section">
         <div className="jc-section-heading">
-          <div><span>AVAILABLE OPPORTUNITIES</span><h3>Jobs from your JobPulse search</h3></div>
-          <label className="jc-search"><Search size={15} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Filter title, company, skill..." /></label>
+          <div><span>YOUR SHORTLIST</span><h3>Jobs you've saved from the dashboard</h3></div>
+          {selectedIds.length > 0 && <button type="button" className="jc-clear" onClick={() => setSelectedIds([])}><X size={14} /> Clear selection</button>}
         </div>
         {loading ? (
-          <div className="jc-empty"><span className="skill-gap-loader" /> Loading job listings...</div>
-        ) : filteredJobs.length ? (
-          <div className="jc-job-list">{filteredJobs.slice(0, 30).map(renderJobCard)}</div>
+          <div className="jc-empty"><span className="skill-gap-loader" /> Loading your saved jobs...</div>
+        ) : shortlist.length ? (
+          <div className="jc-job-list">
+            {shortlist.map((job) => {
+              const id = String(job._id);
+              const isSelected = selectedIds.includes(id);
+              return (
+                <article className="jc-job-card" key={id}>
+                  <div className="jc-job-main">
+                    <span className="jc-source">{job.source || "Job listing"}</span>
+                    <h3>{job.title || "Untitled role"}</h3>
+                    <p className="jc-company">{job.company || "Company not specified"}</p>
+                    <div className="jc-meta">
+                      <span><MapPin size={14} />{job.location || "Location not specified"}</span>
+                      <span><BriefcaseBusiness size={14} />{job.workMode || (job.isRemote ? "Remote" : "Work mode not specified")}</span>
+                    </div>
+                    <div className="jc-skill-list">
+                      {getSkills(job).slice(0, 8).map((skill) => (
+                        <span key={skill} className={profileSkills.has(normalize(skill)) ? "matched" : ""}>{skill}</span>
+                      ))}
+                      {getSkills(job).length > 8 && <small>+{getSkills(job).length - 8} more</small>}
+                      {!getSkills(job).length && <small>Skills are not separately listed by this job source.</small>}
+                    </div>
+                    <small className="jc-saved-date">Saved {job.savedAt ? new Date(job.savedAt).toLocaleDateString() : ""}</small>
+                  </div>
+                  <div className="jc-card-actions">
+                    <button type="button" className={isSelected ? "jc-selected" : ""} onClick={() => toggleCompare(id)}>
+                      {isSelected ? <Check size={15} /> : <Scale size={15} />}
+                      {isSelected ? "Selected" : "Select to compare"}
+                    </button>
+                    {getJobUrl(job) && (
+                      <a href={getJobUrl(job)} target="_blank" rel="noreferrer"><ExternalLink size={14} /> View job</a>
+                    )}
+                    <button type="button" className="jc-remove-saved" disabled={savingId === id} onClick={() => removeSavedJob(job)}>
+                      <X size={14} /> {savingId === id ? "Removing..." : "Remove"}
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
         ) : (
-          <div className="jc-empty">No matching job listings are available. Open Job Search to refresh your recommendations, then try again.</div>
+          <div className="jc-empty">You haven't saved any jobs yet. Go to the dashboard and select Save Job on opportunities you want to revisit.</div>
         )}
-        {!loading && filteredJobs.length > 30 && <p className="jc-footnote">Showing the first 30 of {filteredJobs.length} matching listings. Use the search field to narrow the results.</p>}
       </section>
 
       <section className="jc-section">
         <div className="jc-section-heading">
-          <div><span>JOB COMPARISON</span><h3>Side-by-side comparison</h3></div>
-          {selectedIds.length > 0 && <button type="button" className="jc-clear" onClick={() => setSelectedIds([])}><X size={14} /> Clear selection</button>}
+          <div><span>JOB COMPARISON</span><h3>Compare saved jobs</h3></div>
         </div>
         {selectedJobs.length < 2 ? (
-          <div className="jc-empty">Select at least 2 jobs above to compare them side by side. You can select up to 4.</div>
+          <div className="jc-empty">Select at least 2 saved jobs above to compare them side by side. You can select up to 4.</div>
         ) : (
           <div className="jc-compare-wrap">
             <table className="jc-compare-table">
@@ -259,25 +224,6 @@ function JobComparison({ analysis }) {
               </tbody>
             </table>
           </div>
-        )}
-      </section>
-
-      <section className="jc-section">
-        <div className="jc-section-heading">
-          <div><span>YOUR SAVED JOBS</span><h3>Shortlist</h3></div>
-        </div>
-        {shortlist.length ? (
-          <div className="jc-job-list">{shortlist.map((job) => (
-            <article className="jc-shortlist-card" key={job._id}>
-              <div><h4>{job.title}</h4><p>{job.company} · {job.location}</p><small>Saved {job.savedAt ? new Date(job.savedAt).toLocaleDateString() : ""}</small></div>
-              <div className="jc-shortlist-actions">
-                {job.applicationUrl && <a href={job.applicationUrl} target="_blank" rel="noreferrer">Open job <ExternalLink size={13} /></a>}
-                <button type="button" disabled={savingId === String(job._id)} onClick={() => toggleShortlist(job)}><X size={14} /> Remove</button>
-              </div>
-            </article>
-          ))}</div>
-        ) : (
-          <div className="jc-empty">Your shortlist is empty. Save jobs above to keep them here for later.</div>
         )}
       </section>
     </section>
