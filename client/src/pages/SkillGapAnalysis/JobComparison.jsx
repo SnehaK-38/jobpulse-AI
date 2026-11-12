@@ -49,6 +49,7 @@ function JobComparison({ analysis }) {
   const [shortlist, setShortlist] = useState([]);
   const [savedProfileSkills, setSavedProfileSkills] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
+  const [comparisonVisible, setComparisonVisible] = useState(false);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState("");
   const [error, setError] = useState("");
@@ -92,6 +93,7 @@ function JobComparison({ analysis }) {
 
   const toggleCompare = (jobId) => {
     const id = String(jobId);
+    setComparisonVisible(false);
     setSelectedIds((current) => {
       if (current.includes(id)) return current.filter((item) => item !== id);
       if (current.length >= 4) {
@@ -143,7 +145,10 @@ function JobComparison({ analysis }) {
       <section className="jc-section">
         <div className="jc-section-heading">
           <div><span>YOUR SHORTLIST</span><h3>Jobs you've saved from the dashboard</h3></div>
-          {selectedIds.length > 0 && <button type="button" className="jc-clear" onClick={() => setSelectedIds([])}><X size={14} /> Clear selection</button>}
+          {selectedIds.length > 0 && <div className="jc-selection-actions">
+            {selectedIds.length >= 2 && <button type="button" className="jc-compare-selected" onClick={() => setComparisonVisible(true)}><Scale size={14} /> Compare Selected ({selectedIds.length})</button>}
+            {selectedIds.length > 0 && <button type="button" className="jc-clear" onClick={() => { setSelectedIds([]); setComparisonVisible(false); }}><X size={14} /> Clear selection</button>}
+          </div>}
         </div>
         {loading ? (
           <div className="jc-empty"><span className="skill-gap-loader" /> Loading your saved jobs...</div>
@@ -198,6 +203,8 @@ function JobComparison({ analysis }) {
         </div>
         {selectedJobs.length < 2 ? (
           <div className="jc-empty">Select at least 2 saved jobs above to compare them side by side. You can select up to 4.</div>
+        ) : !comparisonVisible ? (
+          <div className="jc-empty">You have selected {selectedJobs.length} jobs. Click Compare Selected above to view the side-by-side comparison.</div>
         ) : (
           <div className="jc-compare-wrap">
             <table className="jc-compare-table">
