@@ -882,9 +882,7 @@ const saveScrapedJobs = async (
   let saved = 0;
   let duplicates = 0;
 
-  for (
-    const rawJob of jobs
-  ) {
+  for (const rawJob of jobs) {
     const job =
       normalizeJobForDatabase(
         rawJob
@@ -1495,9 +1493,12 @@ const searchJobs = async (
     const retrievalLocation = effective.effectiveLocation;
     const retrievalJobType = effective.effectiveJobType;
     const retrievalWorkMode = effective.effectiveWorkMode;
+    // When the user has not entered a manual query, use their saved target
+    // role for Mongo retrieval and ranking instead of searching all cached jobs.
+    const roleAwareSearchTerm = searchTerm || effective.retrievalSearchTerm;
 
     const mongoQuery = buildMongoSearchQuery({
-      searchTerm,
+      searchTerm: roleAwareSearchTerm,
       location: retrievalLocation,
       jobType: retrievalJobType,
       workMode: retrievalWorkMode,
@@ -1552,7 +1553,7 @@ const searchJobs = async (
       try {
         const rankedCached = await rankJobsWithPython({
           jobs: candidates,
-          searchTerm: searchTerm,
+          searchTerm: roleAwareSearchTerm,
           location: retrievalLocation,
           jobType: retrievalJobType,
           workMode: retrievalWorkMode,
@@ -1580,7 +1581,7 @@ const searchJobs = async (
           profile,
         }))
         .map((job) => fallbackScoreJob(job, {
-          searchTerm,
+          searchTerm: roleAwareSearchTerm,
           profile: rankingProfile,
         }));
       if (
@@ -1592,7 +1593,7 @@ const searchJobs = async (
           profile?.resumeSkills?.length
         )
       ) ranked = ranked.filter((job) => job.profileRelevant);
-      if (searchTerm.trim()) ranked = ranked.filter((job) => job.searchRelevant);
+      if (roleAwareSearchTerm.trim()) ranked = ranked.filter((job) => job.searchRelevant);
       ranked.sort((a, b) => {
         if (hasSearchTerm) {
           return (
