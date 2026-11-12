@@ -16,7 +16,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import Navbar from "../../components/Navbar/Navbar";
-import CareerRoadmap from "./CareerRoadmap";
+import JobComparison from "./JobComparison";
 import { getSkillGapOverview } from "../../services/skillGapService";
 import "./SkillGapAnalysis.css";
 
@@ -82,8 +82,8 @@ function SkillGapAnalysis() {
           <button type="button" className={activeView === "overview" ? "active" : ""} onClick={() => setActiveView("overview")} aria-current={activeView === "overview" ? "page" : undefined}>
             <Layers3 size={15} /> Skill Gap Overview
           </button>
-          <button type="button" className={activeView === "roadmap" ? "active" : ""} onClick={() => setActiveView("roadmap")} aria-current={activeView === "roadmap" ? "page" : undefined}>
-            <Sparkles size={15} /> Career Roadmap
+          <button type="button" className={activeView === "comparison" ? "active" : ""} onClick={() => setActiveView("comparison")} aria-current={activeView === "comparison" ? "page" : undefined}>
+            <BriefcaseBusiness size={15} /> Compare & Shortlist
           </button>
         </nav>
 
@@ -94,8 +94,8 @@ function SkillGapAnalysis() {
           </div>
         )}
 
-        {activeView === "roadmap" ? (
-          <CareerRoadmap analysis={data} />
+        {activeView === "comparison" ? (
+          <JobComparison analysis={data} />
         ) : loading && !data ? (
           <div className="skill-gap-loading"><span className="skill-gap-loader" /> Building your skill gap overview...</div>
         ) : (
