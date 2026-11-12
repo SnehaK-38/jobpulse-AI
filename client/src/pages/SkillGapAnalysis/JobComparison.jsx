@@ -241,13 +241,17 @@ function JobComparison({ analysis }) {
                 <tr><th>Location</th>{selectedJobs.map((job) => <td key={job._id}>{job.location || "Not specified"}</td>)}</tr>
                 <tr><th>Work mode</th>{selectedJobs.map((job) => <td key={job._id}>{job.workMode || (job.isRemote ? "Remote" : "Not specified")}</td>)}</tr>
                 <tr><th>Experience</th>{selectedJobs.map((job) => <td key={job._id}>{job.experience || job.experienceLevel || "Not specified"}</td>)}</tr>
+                <tr><th>Listed requirements</th>{selectedJobs.map((job) => {
+                  const requirements = clean(job.requirements || job.qualifications || "");
+                  return <td key={job._id}>{requirements ? (requirements.length > 360 ? requirements.slice(0, 360) + "…" : requirements) : "Not provided by this listing"}</td>;
+                })}</tr>
                 <tr><th>Salary</th>{selectedJobs.map((job) => <td key={job._id}>{job.salary || "Not specified"}</td>)}</tr>
                 <tr><th>Source</th>{selectedJobs.map((job) => <td key={job._id}>{job.source || "Not specified"}</td>)}</tr>
                 <tr><th>Skills you have</th>{selectedJobs.map((job) => {
                   const matched = getSkills(job).filter((skill) => profileSkills.has(normalize(skill)));
                   return <td key={job._id}>{matched.length ? matched.join(", ") : "No structured matches found"}</td>;
                 })}</tr>
-                <tr><th>Skills to develop</th>{selectedJobs.map((job) => {
+                <tr><th>Missing listed skills</th>{selectedJobs.map((job) => {
                   const missing = getSkills(job).filter((skill) => !profileSkills.has(normalize(skill)));
                   return <td key={job._id}>{missing.length ? missing.join(", ") : "No structured skill gaps found"}</td>;
                 })}</tr>
