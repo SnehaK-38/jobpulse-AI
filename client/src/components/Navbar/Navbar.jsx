@@ -57,7 +57,7 @@ function Navbar({ dashboardMode = false }) {
         )}
 
         {user && dashboardMode && (
-          <li><Link to="/career-tools" className="skill-gap-nav-link"><Target size={16} /> Career Tools</Link></li>
+          <li><Link to="/skill-gap" className="skill-gap-nav-link"><Target size={16} /> Skill Gap Analysis</Link></li>
         )}
 
         {user && (
