@@ -532,3 +532,45 @@ text-transform:uppercase;
 .logo {
 border-radius:10px;
 }
+
+/* Skill Gap Analysis navigation */
+.nav-links .skill-gap-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 1px solid rgba(148, 163, 184, .24);
+  border-radius: 10px;
+  color: #e0e7ff;
+  font-size: 13px;
+  font-weight: 600;
+  transition: .2s ease;
+}
+
+.nav-links .skill-gap-nav-link:hover {
+  border-color: rgba(129, 140, 248, .55);
+  background: rgba(99, 102, 241, .14);
+  color: #a5b4fc;
+}
+
+
+/* Saved Jobs navigation */
+.nav-links .saved-jobs-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  margin-right: 8px;
+  border: 1px solid rgba(148, 163, 184, .24);
+  border-radius: 10px;
+  color: #e0e7ff;
+  font-size: 13px;
+  font-weight: 600;
+  transition: .2s ease;
+}
+
+.nav-links .saved-jobs-nav-link:hover {
+  border-color: rgba(129, 140, 248, .55);
+  background: rgba(99, 102, 241, .14);
+  color: #a5b4fc;
+}

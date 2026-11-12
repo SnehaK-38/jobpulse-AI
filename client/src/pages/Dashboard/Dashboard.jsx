@@ -9,11 +9,14 @@ import {
   Star,
   CheckCircle2,
   ChevronRight,
+  Bookmark,
+  BookmarkCheck,
   X,
 } from "lucide-react";
 
 import { getDashboardJobs } from "../../services/dashboardService";
 import { getValidJobUrl } from "../../services/urlUtils";
+import { addJobToShortlist, getJobShortlist, removeJobFromShortlist } from "../../services/jobShortlistService";
 import Navbar from "../../components/Navbar/Navbar";
 
 import "./Dashboard.css";
@@ -38,6 +41,8 @@ function Dashboard() {
   const [sourceSummary, setSourceSummary] = useState({});
 
   const [searchInfo, setSearchInfo] = useState(null);
+  const [savedJobIds, setSavedJobIds] = useState(new Set());
+  const [savingJobId, setSavingJobId] = useState("");
 
 
   // ==========================================================
@@ -160,9 +165,18 @@ function Dashboard() {
   // ==========================================================
 
   useEffect(() => {
-    fetchJobs({
-      searchTerm: "",
-    });
+    fetchJobs({ searchTerm: "" });
+
+    const loadSavedJobs = async () => {
+      try {
+        const result = await getJobShortlist();
+        const saved = Array.isArray(result?.jobs) ? result.jobs : [];
+        setSavedJobIds(new Set(saved.map((job) => String(job._id))));
+      } catch (err) {
+        console.error("Unable to load saved jobs:", err);
+      }
+    };
+    loadSavedJobs();
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -205,6 +219,39 @@ function Dashboard() {
     fetchJobs({
       searchTerm: "",
     });
+  };
+
+
+  // ==========================================================
+  // SAVE / REMOVE JOB FROM SHORTLIST
+  // ==========================================================
+
+  const toggleSavedJob = async (job) => {
+    const id = String(job?._id || "");
+    if (!id || id === "undefined") {
+      setError("This job cannot be saved because its listing ID is unavailable.");
+      return;
+    }
+
+    try {
+      setSavingJobId(id);
+      setError("");
+      if (savedJobIds.has(id)) {
+        await removeJobFromShortlist(id);
+        setSavedJobIds((current) => {
+          const next = new Set(current);
+          next.delete(id);
+          return next;
+        });
+      } else {
+        await addJobToShortlist(id);
+        setSavedJobIds((current) => new Set([...current, id]));
+      }
+    } catch (err) {
+      setError(err?.response?.data?.message || "Unable to update your saved jobs.");
+    } finally {
+      setSavingJobId("");
+    }
   };
 
 
@@ -559,9 +606,10 @@ function Dashboard() {
                       index
                     }
                     job={job}
-                    onSeeMore={
-                      openJobDetails
-                    }
+                    onSeeMore={openJobDetails}
+                    isSaved={savedJobIds.has(String(job._id))}
+                    isSaving={savingJobId === String(job._id)}
+                    onToggleSave={toggleSavedJob}
                   />
 
                 )
@@ -612,6 +660,9 @@ function Dashboard() {
 function JobCard({
   job,
   onSeeMore,
+  isSaved,
+  isSaving,
+  onToggleSave,
 }) {
 
   const score = Number(
@@ -1075,6 +1126,16 @@ function JobCard({
 
 
         <div className="job-actions">
+
+          <button
+            type="button"
+            className={`save-job-button${isSaved ? " saved" : ""}`}
+            onClick={() => onToggleSave(job)}
+            disabled={isSaving || !job._id}
+          >
+            {isSaved ? <BookmarkCheck size={15} /> : <Bookmark size={15} />}
+            {isSaving ? "Saving..." : isSaved ? "Saved" : "Save Job"}
+          </button>
 
           <button
             type="button"
