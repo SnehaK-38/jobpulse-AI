@@ -91,7 +91,7 @@ function SkillGapAnalysis() {
           </button>
         </nav>
 
-        {error && (
+        {error && activeView === "overview" && (
           <div className="skill-gap-alert" role="alert">
             <AlertCircle size={18} />
             <span>{error}</span>
