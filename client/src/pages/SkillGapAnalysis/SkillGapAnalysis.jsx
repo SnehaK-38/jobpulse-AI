@@ -17,7 +17,6 @@ import {
   ChevronRight,
 } from "lucide-react";
 import Navbar from "../../components/Navbar/Navbar";
-import JobComparison from "./JobComparison";
 import { getSkillGapOverview } from "../../services/skillGapService";
 import "./SkillGapAnalysis.css";
 
@@ -27,11 +26,6 @@ function SkillGapAnalysis() {
   const [error, setError] = useState("");
   const [priorityPage, setPriorityPage] = useState(0);
   const [searchParams] = useSearchParams();
-  const [activeView, setActiveView] = useState(searchParams.get("tab") === "saved" ? "comparison" : "overview");
-
-  useEffect(() => {
-    setActiveView(searchParams.get("tab") === "saved" ? "comparison" : "overview");
-  }, [searchParams]);
 
   const loadAnalysis = useCallback(async () => {
     try {
@@ -78,33 +72,20 @@ function SkillGapAnalysis() {
             <h1>Skill Gap Analysis</h1>
             <p>See how your skills compare with the requirements appearing in jobs related to your target role.</p>
           </div>
-          {activeView === "overview" && (
-            <button className="skill-gap-refresh" onClick={loadAnalysis} disabled={loading}>
-              <RefreshCw size={16} className={loading ? "is-spinning" : ""} />
-              {loading ? "Analysing..." : "Refresh analysis"}
-            </button>
-          )}
+          <button className="skill-gap-refresh" onClick={loadAnalysis} disabled={loading}>
+            <RefreshCw size={16} className={loading ? "is-spinning" : ""} />
+            {loading ? "Analysing..." : "Refresh analysis"}
+          </button>
         </section>
 
-        <nav className="skill-gap-view-tabs" aria-label="Skill gap sections">
-          <button type="button" className={activeView === "overview" ? "active" : ""} onClick={() => setActiveView("overview")} aria-current={activeView === "overview" ? "page" : undefined}>
-            <Layers3 size={15} /> Skill Gap Analysis
-          </button>
-          <button type="button" className={activeView === "comparison" ? "active" : ""} onClick={() => setActiveView("comparison")} aria-current={activeView === "comparison" ? "page" : undefined}>
-            <BriefcaseBusiness size={15} /> Saved Jobs
-          </button>
-        </nav>
-
-        {error && activeView === "overview" && (
+        {error && (
           <div className="skill-gap-alert" role="alert">
             <AlertCircle size={18} />
             <span>{error}</span>
           </div>
         )}
 
-        {activeView === "comparison" ? (
-          <JobComparison analysis={data} />
-        ) : loading && !data ? (
+        {loading && !data ? (
           <div className="skill-gap-loading"><span className="skill-gap-loader" /> Building your skill gap overview...</div>
         ) : (
           <>
@@ -264,7 +245,7 @@ function SkillGapAnalysis() {
               </div>
             </section>
           </>
-        )}
+        }
       </main>
     </>
   );
