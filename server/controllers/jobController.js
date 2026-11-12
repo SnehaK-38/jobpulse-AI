@@ -882,9 +882,12 @@ const saveScrapedJobs = async (
   let saved = 0;
   let duplicates = 0;
 
-  for (
-    const rawJob of jobs
-  ) {
+  // Save in small concurrent batches instead of waiting for each MongoDB
+  // operation one by one. This keeps the same upsert/create behavior while
+  // reducing the total time spent persisting freshly scraped jobs.
+  const SAVE_CONCURRENCY = 10;
+
+  const saveOneJob = async (rawJob) => {
     const job =
       normalizeJobForDatabase(
         rawJob
@@ -975,6 +978,21 @@ const saveScrapedJobs = async (
         );
       }
     }
+  };
+
+  for (
+    let index = 0;
+    index < jobs.length;
+    index += SAVE_CONCURRENCY
+  ) {
+    const batch = jobs.slice(
+      index,
+      index + SAVE_CONCURRENCY
+    );
+
+    await Promise.all(
+      batch.map(saveOneJob)
+    );
   }
 
   return {
