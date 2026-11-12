@@ -58,7 +58,7 @@ function Navbar({ dashboardMode = false }) {
 
         {user && dashboardMode && (
           <>
-            <li><Link to="/skill-gap?tab=saved" className="saved-jobs-nav-link"><Bookmark size={16} /> Saved Jobs</Link></li>
+            <li><Link to="/saved-jobs" className="saved-jobs-nav-link"><Bookmark size={16} /> Saved Jobs</Link></li>
             <li><Link to="/skill-gap" className="skill-gap-nav-link"><Target size={16} /> Skill Gap Analysis</Link></li>
           </>
         )}
