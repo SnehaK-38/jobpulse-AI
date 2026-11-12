@@ -82,7 +82,7 @@ function SkillGapAnalysis() {
 
         <nav className="skill-gap-view-tabs" aria-label="Skill gap sections">
           <button type="button" className={activeView === "overview" ? "active" : ""} onClick={() => setActiveView("overview")} aria-current={activeView === "overview" ? "page" : undefined}>
-            <Layers3 size={15} /> Skill Gap Overview
+            <Layers3 size={15} /> Skill Gap Analysis
           </button>
           <button type="button" className={activeView === "comparison" ? "active" : ""} onClick={() => setActiveView("comparison")} aria-current={activeView === "comparison" ? "page" : undefined}>
             <BriefcaseBusiness size={15} /> Saved Jobs
