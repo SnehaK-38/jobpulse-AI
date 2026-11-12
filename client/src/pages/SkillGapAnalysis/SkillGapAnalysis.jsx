@@ -69,13 +69,17 @@ function SkillGapAnalysis() {
         <section className="skill-gap-heading">
           <div>
             <span className="skill-gap-eyebrow"><Sparkles size={14} /> CAREER INTELLIGENCE</span>
-            <h1>Skill Gap Analysis</h1>
-            <p>See how your saved skills compare with the skills appearing in jobs related to your target role.</p>
+            <h1>{activeView === "overview" ? "Skill Gap Analysis" : "Job Comparison & Shortlisting"}</h1>
+            <p>{activeView === "overview"
+              ? "See how your saved skills compare with the skills appearing in jobs related to your target role."
+              : "Compare real job opportunities against your profile and save the ones you want to revisit."}</p>
           </div>
-          <button className="skill-gap-refresh" onClick={loadAnalysis} disabled={loading}>
-            <RefreshCw size={16} className={loading ? "is-spinning" : ""} />
-            {loading ? "Analysing..." : "Refresh analysis"}
-          </button>
+          {activeView === "overview" && (
+            <button className="skill-gap-refresh" onClick={loadAnalysis} disabled={loading}>
+              <RefreshCw size={16} className={loading ? "is-spinning" : ""} />
+              {loading ? "Analysing..." : "Refresh analysis"}
+            </button>
+          )}
         </section>
 
         <nav className="skill-gap-view-tabs" aria-label="Career intelligence views">
