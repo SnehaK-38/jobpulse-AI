@@ -22,7 +22,7 @@ import "./JobComparison.css";
 
 const clean = (value) => String(value ?? "").trim();
 const normalize = (value) => {
-  const skill = clean(value).toLowerCase().replace(/\\s+/g, " ");
+  const skill = clean(value).toLowerCase().replace(/\s+/g, " ");
   const aliases = {
     js: "javascript",
     "javascript es6": "javascript",
