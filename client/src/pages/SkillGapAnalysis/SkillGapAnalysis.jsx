@@ -243,7 +243,7 @@ function SkillGapAnalysis() {
               </div>
             </section>
           </>
-        }
+        )}
       </main>
     </>
   );
