@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
 import {
   Activity,
   AlertCircle,
@@ -25,7 +24,6 @@ function SkillGapAnalysis() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [priorityPage, setPriorityPage] = useState(0);
-  const [searchParams] = useSearchParams();
 
   const loadAnalysis = useCallback(async () => {
     try {
