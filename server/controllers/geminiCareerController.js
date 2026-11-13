@@ -20,6 +20,7 @@ const recordGeminiFailure = (purpose, error) => {
     message: getGeminiErrorMessage(error), at: new Date().toISOString() };
   geminiHealth.lastFailureAt = failure.at; geminiHealth.lastFailure = failure;
   geminiHealth.failuresByFeature[failure.feature] = failure;
+  console.error("❌ Gemini API FAILURE | feature=" + failure.feature + " | purpose=" + purpose + " | HTTP " + (failure.status || "unknown") + " | " + failure.message + " | at=" + failure.at);
 };
 const getGeminiStatus = (req, res) => {
   const failed = geminiHealth.lastFailureAt && (!geminiHealth.lastSuccessAt || geminiHealth.lastFailureAt > geminiHealth.lastSuccessAt);
