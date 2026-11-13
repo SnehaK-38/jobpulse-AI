@@ -9,7 +9,7 @@ const clean = (value) => String(value == null ? "" : value).trim();
 const norm = (value) => clean(value).toLowerCase().replace(/[^a-z0-9+#.]+/g, " ").trim();
 const userIdOf = (req) => req.user && (req.user._id || req.user.id || req.user.userId);
 const unique = (values) => [...new Map((values || []).map((value) => [norm(value), clean(value)]).filter(([key, value]) => key && value)).values()];
-const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\$&");
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\\]\\]/g, "\\const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\$&");");
 
 const skillAppearsInJob = (skill, job) => {
   const structured = [...(job.skills || []), ...(job.detectedJobSkills || [])];
@@ -119,7 +119,7 @@ const generateMissingSkillsRoadmap = async (req, res) => {
       };
     });
 
-    // Respect prerequisite relationships while keeping higher-demand skills near the top.
+    if (items.some((item) => item.topics.length < 2 || !item.practiceTask)) {\n      throw new Error("The learning plan is missing practical topics or project tasks. Please regenerate it.");\n    }\n\n    // Respect prerequisite relationships while keeping higher-demand skills near the top.
     const priorityRank = { High: 0, Medium: 1, Low: 2 };
     items.sort((a, b) => {
       const aPrerequisite = items.some((candidate) => candidate.prerequisites.some((name) => norm(name) === norm(a.skill)));
