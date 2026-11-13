@@ -21,3 +21,18 @@ export const updateLearningStatus = async (itemId, status) => {
   const response = await API.patch("/career-development/roadmap/" + itemId + "/status", { status }, auth());
   return response.data;
 };
+
+export const getGeminiInterestOptions = async () => {
+  const response = await API.get("/career-development/ai/interests", auth());
+  return response.data;
+};
+
+export const generateGeminiCareerRecommendations = async (interests) => {
+  const response = await API.post("/career-development/ai/recommendations", { interests }, auth());
+  return response.data;
+};
+
+export const createGeminiLearningRoadmap = async (role) => {
+  const response = await API.post("/career-development/ai/roadmap", { role }, auth());
+  return response.data;
+};

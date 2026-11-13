@@ -1,0 +1,40 @@
+/* Saved Jobs readability improvements — scoped to this page only */
+.saved-jobs-page .job-comparison { color: #24314f; }
+.saved-jobs-page .jc-kicker { font-size: 12px; }
+.saved-jobs-page .jc-intro h2 { font-size: 28px; }
+.saved-jobs-page .jc-intro p { color: #f1f0ff; font-size: 14px; }
+.saved-jobs-page .jc-refresh { font-size: 13px; }
+.saved-jobs-page .jc-summary-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.saved-jobs-page .jc-summary-row strong { color: #202d50; font-size: 27px; }
+.saved-jobs-page .jc-summary-row span { color: #53617d; font-size: 13px; font-weight: 600; }
+.saved-jobs-page .jc-alert,
+.saved-jobs-page .jc-notice { font-size: 14px; }
+.saved-jobs-page .jc-section-heading>div>span { color: #5745c5; font-size: 12px; }
+.saved-jobs-page .jc-section-heading h3 { color: #1d2947; font-size: 19px; }
+.saved-jobs-page .jc-source { color: #5140b5; font-size: 11px; }
+.saved-jobs-page .jc-job-main h3 { color: #1b2948; font-size: 18px; line-height: 1.4; }
+.saved-jobs-page .jc-company { color: #465574; font-size: 14px; }
+.saved-jobs-page .jc-meta { color: #52617d; font-size: 13px; }
+.saved-jobs-page .jc-skill-list span { color: #43516d; font-size: 12px; font-weight: 600; }
+.saved-jobs-page .jc-skill-list span.matched { color: #126747; }
+.saved-jobs-page .jc-skill-list small { color: #53617b; font-size: 12px; }
+.saved-jobs-page .jc-saved-date { color: #596783; font-size: 12px; }
+.saved-jobs-page .jc-card-actions button,
+.saved-jobs-page .jc-card-actions a,
+.saved-jobs-page .jc-clear,
+.saved-jobs-page .jc-compare-selected { font-size: 12px; }
+.saved-jobs-page .jc-empty { color: #53617b; font-size: 14px; line-height: 1.6; }
+.saved-jobs-page .jc-compare-table th,
+.saved-jobs-page .jc-compare-table td { color: #3f4d69; font-size: 13px; line-height: 1.65; }
+.saved-jobs-page .jc-compare-table thead th { color: #263452; font-size: 14px; }
+.saved-jobs-page .jc-compare-table thead th:first-child,
+.saved-jobs-page .jc-compare-table tbody th { color: #344361; }
+.saved-jobs-page .jc-compare-table thead small { color: #53617b; font-size: 12px; }
+.saved-jobs-page .jc-compare-table a { color: #4d3db8; font-size: 13px; }
+.saved-jobs-page button:focus-visible,
+.saved-jobs-page a:focus-visible { outline: 3px solid rgba(91, 75, 205, .35); outline-offset: 2px; }
+@media (max-width: 760px) {
+  .saved-jobs-page .jc-summary-row { grid-template-columns: 1fr 1fr; }
+  .saved-jobs-page .jc-intro h2 { font-size: 25px; }
+  .saved-jobs-page .jc-job-main h3 { font-size: 17px; }
+}

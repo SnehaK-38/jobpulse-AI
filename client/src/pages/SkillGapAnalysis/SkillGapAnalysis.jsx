@@ -16,6 +16,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import Navbar from "../../components/Navbar/Navbar";
+import MissingSkillsRoadmap from "./MissingSkillsRoadmap";
 import { getSkillGapOverview } from "../../services/skillGapService";
 import "./SkillGapAnalysis.css";
 
@@ -24,6 +25,7 @@ function SkillGapAnalysis() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [priorityPage, setPriorityPage] = useState(0);
+  const [activeView, setActiveView] = useState("analysis");
 
   const loadAnalysis = useCallback(async () => {
     try {
@@ -76,6 +78,15 @@ function SkillGapAnalysis() {
           </button>
         </section>
 
+        <nav className="skill-gap-view-tabs" aria-label="Skill development views">
+          <button type="button" className={activeView === "analysis" ? "active" : ""} onClick={() => setActiveView("analysis")}>
+            <Target size={15} /> Skill Gap Analysis
+          </button>
+          <button type="button" className={activeView === "roadmap" ? "active" : ""} onClick={() => setActiveView("roadmap")}>
+            <TrendingUp size={15} /> Missing Skills Roadmap
+          </button>
+        </nav>
+
         {error && (
           <div className="skill-gap-alert" role="alert">
             <AlertCircle size={18} />
@@ -85,6 +96,12 @@ function SkillGapAnalysis() {
 
         {loading && !data ? (
           <div className="skill-gap-loading"><span className="skill-gap-loader" /> Building your skill gap overview...</div>
+        ) : activeView === "roadmap" ? (
+          <MissingSkillsRoadmap
+            profile={profile}
+            missingSkills={missingSkills}
+            jobIds={data?.jobIds || []}
+          />
         ) : (
           <>
             <section className="skill-gap-stats">
