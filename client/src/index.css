@@ -30,25 +30,6 @@
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
-}
 
 body {
   margin: 0;
@@ -108,4 +89,54 @@ code {
   line-height: 135%;
   padding: 4px 8px;
   background: var(--code-bg);
+}
+
+
+/* App-wide manual dark theme. The navbar toggle persists this choice. */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --text: #475467;
+  --text-h: #101828;
+  --bg: #ffffff;
+  --border: #e5e7eb;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --text: #cbd5e1;
+  --text-h: #f1f5f9;
+  --bg: #0b1220;
+  --border: #263449;
+  --code-bg: #172337;
+  --accent: #a5b4fc;
+  --accent-bg: rgba(129, 140, 248, .16);
+  --accent-border: rgba(129, 140, 248, .5);
+  --social-bg: rgba(30, 41, 59, .7);
+  --shadow: rgba(0, 0, 0, .35) 0 10px 25px -5px;
+}
+:root[data-theme="dark"] body,
+:root[data-theme="dark"] #root {
+  background: #0b1220;
+  color: #cbd5e1;
+}
+:root[data-theme="dark"] :is(main, section, article, aside, form, .page, .container, .content-wrapper) {
+  color: #cbd5e1;
+}
+:root[data-theme="dark"] :is(input, textarea, select) {
+  background-color: #111c2e;
+  color: #e2e8f0;
+  border-color: #334155;
+}
+:root[data-theme="dark"] :is(input, textarea, select)::placeholder {
+  color: #94a3b8;
+}
+:root[data-theme="dark"] :is(h1, h2, h3, h4, h5, h6, label, p, small, span, li) {
+  text-decoration-color: currentColor;
+}
+:root[data-theme="dark"] :is(.dropdown, .modal, .popover, .card, .job-card, .search-panel, .stat-card, .skill-card, .roadmap-card, .saved-job-card) {
+  background-color: #111c2e;
+  border-color: #334155;
+  color: #e2e8f0;
+}
+:root[data-theme="dark"] :is(.dropdown-link, .user-info h4, .user-info p) {
+  color: #e2e8f0;
 }
