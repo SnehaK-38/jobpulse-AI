@@ -49,7 +49,7 @@ function Navbar({ dashboardMode = false }) {
         <span className="logo-text"><span>JobPulse</span><small>AI CAREER MATCHING</small></span>
       </Link>
 
-      <ul className="nav-links">\n        <li><button className="theme-toggle" type="button" onClick={toggleTheme} aria-label={theme === "light" ? "Switch to dark theme" : "Switch to light theme"} title={theme === "light" ? "Switch to dark theme" : "Switch to light theme"}>{theme === "light" ? <Moon size={18} /> : <Sun size={18} />}<span>{theme === "light" ? "Dark" : "Light"} mode</span></button></li>
+      <ul className="nav-links">
         {!dashboardMode && (
           <>
             <li><a href="#features">Features</a></li>
@@ -97,6 +97,12 @@ function Navbar({ dashboardMode = false }) {
             )}
           </li>
         )}
+        <li className="theme-toggle-item">
+          <button className="theme-toggle" type="button" onClick={toggleTheme} aria-label={theme === "light" ? "Switch to dark theme" : "Switch to light theme"} title={theme === "light" ? "Switch to dark theme" : "Switch to light theme"}>
+            {theme === "light" ? <Moon size={18} /> : <Sun size={18} />}
+            <span>{theme === "light" ? "Dark" : "Light"}</span>
+          </button>
+        </li>
       </ul>
     </nav>
   );
