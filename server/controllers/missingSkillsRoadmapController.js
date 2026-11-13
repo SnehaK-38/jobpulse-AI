@@ -10,6 +10,20 @@ const norm = (value) => clean(value).toLowerCase().replace(/[^a-z0-9+#.]+/g, " "
 const userIdOf = (req) => req.user && (req.user._id || req.user.id || req.user.userId);
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const unique = (values) => [...new Map((values || []).map((value) => [norm(value), clean(value)]).filter(([key, value]) => key && value)).values()];
+const sanitizeRoadmap = (items) => (items || []).map((item) => {
+  const copy = { ...item };
+  if (copy.assessment) {
+    copy.assessment = {
+      title: copy.assessment.title,
+      passPercentage: copy.assessment.passPercentage,
+      verified: copy.assessment.verified,
+      generatedAt: copy.assessment.generatedAt,
+      attempts: copy.assessment.attempts || [],
+      questions: (copy.assessment.questions || []).map(({ question, options }) => ({ question, options }))
+    };
+  }
+  return copy;
+});
 
 const skillAppearsInJob = (skill, job) => {
   const structured = [...(job.skills || []), ...(job.detectedJobSkills || [])];
@@ -32,20 +46,7 @@ const getMissingSkillsRoadmap = async (req, res) => {
     const saved = await CareerDevelopment.findOne({ userId })
       .select("missingSkillsRoadmap missingSkillsRoadmapRole missingSkillsRoadmapUpdatedAt missingSkillsWeeklyPlan")
       .lean();
-    const roadmap = (saved?.missingSkillsRoadmap || []).map((item) => {
-      const copy = { ...item };
-      if (copy.assessment) {
-        copy.assessment = {
-          title: copy.assessment.title,
-          passPercentage: copy.assessment.passPercentage,
-          verified: copy.assessment.verified,
-          generatedAt: copy.assessment.generatedAt,
-          attempts: copy.assessment.attempts || [],
-          questions: (copy.assessment.questions || []).map(({ question, options }) => ({ question, options }))
-        };
-      }
-      return copy;
-    });
+    const roadmap = sanitizeRoadmap(saved?.missingSkillsRoadmap);
     return res.json({
       success: true,
       targetRole: saved?.missingSkillsRoadmapRole || "",
@@ -159,7 +160,7 @@ const generateMissingSkillsRoadmap = async (req, res) => {
     return res.json({
       success: true,
       targetRole: result.missingSkillsRoadmapRole,
-      roadmap: result.missingSkillsRoadmap,
+      roadmap: sanitizeRoadmap(result.missingSkillsRoadmap),
       updatedAt: result.missingSkillsRoadmapUpdatedAt,
       jobsAnalysed: jobs.length,
     });
