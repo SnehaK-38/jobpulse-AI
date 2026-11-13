@@ -83,6 +83,10 @@ function Login() {
       setResetToken(token);
       setShowResetPassword(true);
     }
+
+    if (searchParams.get("session") === "expired") {
+      setError("Your session expired. Please sign in again.");
+    }
   }, [searchParams]);
 
 
@@ -141,10 +145,12 @@ function Login() {
         JSON.stringify(response.data.user)
       );
 
-      // Save Remember Me
+      // Save Remember Me as an explicit string so the app can
+      // correctly distinguish between the user's choice and a truthy
+      // non-empty string value from localStorage.
       localStorage.setItem(
         "rememberMe",
-        rememberMe
+        String(rememberMe)
       );
 
       // Redirect to Home

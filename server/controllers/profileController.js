@@ -54,6 +54,27 @@ exports.updateProfile = async (req, res) => {
       portfolio,
     } = req.body;
 
+    const yearsOfExperience =
+      req.body.yearsOfExperience === undefined
+        ? undefined
+        : req.body.yearsOfExperience === null ||
+            req.body.yearsOfExperience === ""
+          ? null
+          : Number(req.body.yearsOfExperience);
+
+    if (
+      yearsOfExperience !== undefined &&
+      yearsOfExperience !== null &&
+      (!Number.isFinite(yearsOfExperience) ||
+        yearsOfExperience < 0 ||
+        yearsOfExperience > 80)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Years of experience must be between 0 and 80.",
+      });
+    }
+
     // ============================
     // Bio Validation
     // ============================
@@ -119,6 +140,7 @@ if (bio !== undefined) {
         education: req.body.education || [],
         projects: req.body.projects || [],
         experience: req.body.experience || [],
+        yearsOfExperience,
         certifications: req.body.certifications || [],
         achievements: req.body.achievements || [],
         languagesKnown: req.body.languagesKnown || [],

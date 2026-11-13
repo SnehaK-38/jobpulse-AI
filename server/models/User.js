@@ -171,6 +171,13 @@ resumeSize: {
       default: [],
     },
 
+    yearsOfExperience: {
+      type: Number,
+      min: 0,
+      max: 80,
+      default: null,
+    },
+
     education: [
   {
     institution: {

@@ -253,6 +253,19 @@
   font-weight: 700;
 }
 
+.provider-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 12px;
+  margin: -12px 0 22px;
+  color: #667085;
+  font-size: 12px;
+}
+
+.provider-status strong {
+  color: #475467;
+}
+
 /* =========================================================
    SECTION
 ========================================================= */
@@ -307,6 +320,54 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
+}
+
+.job-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 24px;
+}
+
+.job-pagination button {
+  min-width: 38px;
+  height: 38px;
+  padding: 0 10px;
+  border: 1px solid #e1e4ec;
+  border-radius: 9px;
+  background: white;
+  color: #475467;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.job-pagination button:hover:not(:disabled),
+.job-pagination button[aria-current="page"] {
+  border-color: #6366f1;
+  background: #f1f1ff;
+  color: #4338ca;
+}
+
+.job-pagination button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.job-pagination .pagination-direction {
+  padding: 0 13px;
+}
+
+.pagination-ellipsis,
+.pagination-page-label {
+  color: #667085;
+  font-size: 12px;
+}
+
+.pagination-page-label {
+  margin-left: 7px;
 }
 
 /* =========================================================
@@ -465,7 +526,7 @@
 .quick-match {
   display: grid;
   grid-template-columns:
-    repeat(3, minmax(0, 1fr));
+    repeat(4, minmax(0, 1fr));
   gap: 10px;
   margin-top: 16px;
 }
@@ -552,6 +613,13 @@
   background: #f9fafb;
   color: #6b7280;
   border: 1px solid #eceef1;
+}
+
+.skill-data-note {
+  margin: 0;
+  color: #737985;
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 /* =========================================================
