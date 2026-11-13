@@ -29,7 +29,7 @@ const getGeminiErrorMessage = (error) => {
   return apiMessage || error.message || "Gemini could not complete the request.";
 };
 
-const askGemini = async (prompt) => {
+const askGemini = async (prompt, purpose = 'content generation') => {
   const key = process.env.GEMINI_API_KEY;
   if (!key) {
     const error = new Error("Gemini is not configured. Add GEMINI_API_KEY to server/.env and restart the backend.");
@@ -52,10 +52,15 @@ const askGemini = async (prompt) => {
           generationConfig: { responseMimeType: "application/json", temperature: 0.35, maxOutputTokens: 7000 }
         }, { timeout: 60000 });
 
+        console.log("✅ Gemini API SUCCESS | purpose=" + purpose + " | model=" + model + " | HTTP " + response.status);
+
         const output = response.data?.candidates?.[0]?.content?.parts?.map((part) => part.text || "").join("").trim();
         if (!output) throw new Error("Gemini returned an empty response. Please try again.");
         try {
-          return JSON.parse(output.replace(/^\u0060{3}(?:json)?\s*/i, "").replace(/\s*\u0060{3}$/i, ""));
+          const parsed = JSON.parse(output.replace(/^\u0060{3}(?:json)?\s*/i, "").replace(/\s*\u0060{3}$/i, ""));
+          const generatedCount = Array.isArray(parsed.interests) ? parsed.interests.length : Array.isArray(parsed.roles) ? parsed.roles.length : Array.isArray(parsed.items) ? parsed.items.length : "structured response";
+          console.log("✅ Fresh Gemini-generated content parsed | purpose=" + purpose + " | model=" + model + " | items=" + generatedCount);
+          return parsed;
         } catch {
           throw new Error("Gemini returned an invalid structured response. Please try again.");
         }
@@ -87,7 +92,7 @@ const getInterestOptions = async (req, res) => {
     if (interestCache.value && interestCache.expiresAt > Date.now()) {
       return res.json({ success: true, interests: interestCache.value, source: "gemini-cache" });
     }
-    const data = await askGemini("Create a broad, current career-interest taxonomy for IT/computer science students exploring careers. Return JSON only: { interests: string[] }. Provide 55 to 70 concise, distinct selectable interest labels across software, web, mobile, data, AI, testing, cloud, security, networking, design, product, infrastructure, and business technology. Use natural labels, avoid duplicates and overly narrow vendor certifications.");
+    const data = await askGemini("Create a broad, current career-interest taxonomy for IT/computer science students exploring careers. Return JSON only: { interests: string[] }. Provide 55 to 70 concise, distinct selectable interest labels across software, web, mobile, data, AI, testing, cloud, security, networking, design, product, infrastructure, and business technology. Use natural labels, avoid duplicates and overly narrow vendor certifications.", "career interests");
     const interests = unique(data.interests).slice(0, 70);
     if (interests.length < 20) throw new Error("Gemini returned too few career interests. Please retry.");
     interestCache = { value: interests, expiresAt: Date.now() + 12 * 60 * 60 * 1000 };
@@ -112,7 +117,7 @@ const generateCareerRecommendations = async (req, res) => {
     if (!interests.length) return res.status(400).json({ success: false, message: "Select and save at least one career interest first." });
     const skills = unique([...(user.skills || []), ...(user.resumeSkills || [])]);
     const jobContext = jobs.slice(0, 80).map((j) => ({ title: j.title, skills: (j.skills || j.detectedJobSkills || []).slice(0, 12), description: clean(j.description).slice(0, 240) }));
-    const data = await askGemini("Act as an independent occupational research and career advisor. Generate 18 to 30 realistic IT/technology career paths relevant to selected interests. Define each role's standard required competencies independently of the user's current skills. Do NOT copy, favour, or limit required skills to the user's existing skills. Include genuine role-specific technical skills, tools, methods and domain knowledge; avoid generic editor/tool names (such as VS Code) and generic skills unless essential. Each role must have 7-12 concrete role-specific skills, 2-5 relevant interest tags and 2-3 plausible progression roles. Return JSON only with { roles: [{ title, industry, interests: string[], skills: string[], nextRoles: string[], summary }] }. Every role must match at least one selected interest, but retain all relevant interest tags rather than filtering them to selected interests. Do not invent job counts. Avoid duplicate roles and include entry-level through specialist roles. User interests: " + JSON.stringify(interests) + ". The following profile skills are for matching only; do not copy them into the role requirements unless they are genuinely core to the occupation: " + JSON.stringify(skills) + ". Target role: " + clean(user.targetRole) + ". Preferred industry: " + clean(user.preferredIndustry) + ". Job listing sample (examples only, not a census): " + JSON.stringify(jobContext));
+    const data = await askGemini("Act as an independent occupational research and career advisor. Generate 18 to 30 realistic IT/technology career paths relevant to selected interests. Define each role's standard required competencies independently of the user's current skills. Do NOT copy, favour, or limit required skills to the user's existing skills. Include genuine role-specific technical skills, tools, methods and domain knowledge; avoid generic editor/tool names (such as VS Code) and generic skills unless essential. Each role must have 7-12 concrete role-specific skills, 2-5 relevant interest tags and 2-3 plausible progression roles. Return JSON only with { roles: [{ title, industry, interests: string[], skills: string[], nextRoles: string[], summary }] }. Every role must match at least one selected interest, but retain all relevant interest tags rather than filtering them to selected interests. Do not invent job counts. Avoid duplicate roles and include entry-level through specialist roles. User interests: " + JSON.stringify(interests) + ". The following profile skills are for matching only; do not copy them into the role requirements unless they are genuinely core to the occupation: " + JSON.stringify(skills) + ". Target role: " + clean(user.targetRole) + ". Preferred industry: " + clean(user.preferredIndustry) + ". Job listing sample (examples only, not a census): " + JSON.stringify(jobContext), "career recommendations");
     const roles = (data.roles || []).map((r) => ({
       title: clean(r.title).slice(0, 100), industry: clean(r.industry).slice(0, 80),
       interests: unique(r.interests).slice(0, 8),
@@ -147,7 +152,7 @@ const generateGeminiRoadmap = async (req, res) => {
     const missing = role.skills.filter((skill) => !skills.some((s) => norm(s) === norm(skill)));
     const roadmapTargets = missing;
     const roadmapMode = missing.length ? "skill-gap development" : "career advancement: the user already matches the listed core skills, so suggest deeper intermediate-to-advanced competencies that extend them; do not simply repeat existing skills.";
-    const data = await askGemini("Create a practical personalised learning roadmap. Mode: " + roadmapMode + ". Return JSON only: { items: [{ skill, priority, reason, estimatedWeeks, topics: string[], resourceTitle, resourceUrl, practiceTask }] }. If target skills is non-empty, create one item for every target skill and do not omit any. If target skills is empty, generate 5-7 complementary intermediate-to-advanced competencies for the next stage of this career, and do not repeat existing skills. Provide 2-4 actionable topics per item, 1-8 estimated weeks, priority High/Medium/Low. Use official documentation URLs only when confident; otherwise use an empty resourceUrl and a useful resourceTitle. Never fabricate URLs. Give practical project tasks. Role: " + role.title + ". Target skills: " + JSON.stringify(roadmapTargets) + ". Existing skills: " + JSON.stringify(skills) + ".");
+    const data = await askGemini("Create a practical personalised learning roadmap. Mode: " + roadmapMode + ". Return JSON only: { items: [{ skill, priority, reason, estimatedWeeks, topics: string[], resourceTitle, resourceUrl, practiceTask }] }. If target skills is non-empty, create one item for every target skill and do not omit any. If target skills is empty, generate 5-7 complementary intermediate-to-advanced competencies for the next stage of this career, and do not repeat existing skills. Provide 2-4 actionable topics per item, 1-8 estimated weeks, priority High/Medium/Low. Use official documentation URLs only when confident; otherwise use an empty resourceUrl and a useful resourceTitle. Never fabricate URLs. Give practical project tasks. Role: " + role.title + ". Target skills: " + JSON.stringify(roadmapTargets) + ". Existing skills: " + JSON.stringify(skills) + ".", "learning roadmap");
     const previousStatus = new Map((saved?.roadmap || []).map((item) => [norm(item.skill), item.status]));
     const items = (data.items || []).map((item, index) => ({
       skill: clean(item.skill), priority: ["High","Medium","Low"].includes(item.priority) ? item.priority : "Medium",
