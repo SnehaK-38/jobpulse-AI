@@ -7,6 +7,33 @@ const clean = (v) => String(v == null ? "" : v).trim();
 const norm = (v) => clean(v).toLowerCase().replace(/[^a-z0-9+#.]+/g, " ").trim();
 const unique = (items) => [...new Map((items || []).map((v) => [norm(v), clean(v)]).filter(([k,v]) => k && v)).values()];
 let interestCache = { value: null, expiresAt: 0 };
+const geminiHealth = { lastSuccessAt: null, lastFailureAt: null, lastFailure: null, failuresByFeature: {} };
+const featureForPurpose = (purpose = "") => {
+  const p = String(purpose).toLowerCase();
+  if (p.includes("career interest") || p.includes("career recommendation") || p.includes("learning roadmap")) return "Career Navigator";
+  if (p.includes("missing skill") || p.includes("weekly") || p.includes("assessment") || p.includes("project")) return "Missing Skills Roadmap";
+  if (p.includes("career assistant")) return "AI Career Assistant";
+  return "Other Gemini feature";
+};
+const recordGeminiFailure = (purpose, error) => {
+  const failure = { feature: featureForPurpose(purpose), purpose, status: error.response?.status || error.status || null,
+    message: getGeminiErrorMessage(error), at: new Date().toISOString() };
+  geminiHealth.lastFailureAt = failure.at; geminiHealth.lastFailure = failure;
+  geminiHealth.failuresByFeature[failure.feature] = failure;
+};
+const getGeminiStatus = (req, res) => {
+  const failed = geminiHealth.lastFailureAt && (!geminiHealth.lastSuccessAt || geminiHealth.lastFailureAt > geminiHealth.lastSuccessAt);
+  const failure = failed ? geminiHealth.lastFailure : null;
+  let status = "connected";
+  if (failure) {
+    if (failure.status === 429) status = "rate_limited";
+    else if (failure.status === 401 || failure.status === 403) status = "authentication_error";
+    else if ([502, 503, 504].includes(failure.status)) status = "unavailable";
+    else status = "error";
+  } else if (!geminiHealth.lastSuccessAt) status = "not_tested";
+  return res.json({ success: true, status, lastSuccessAt: geminiHealth.lastSuccessAt,
+    lastFailure: geminiHealth.lastFailure, failuresByFeature: geminiHealth.failuresByFeature });
+};
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const isTemporaryGeminiError = (error) => {
@@ -52,7 +79,7 @@ const askGemini = async (prompt, purpose = 'content generation') => {
           generationConfig: { responseMimeType: "application/json", temperature: 0.35, maxOutputTokens: 7000 }
         }, { timeout: 60000 });
 
-        console.log("✅ Gemini API SUCCESS | purpose=" + purpose + " | model=" + model + " | HTTP " + response.status);
+        geminiHealth.lastSuccessAt = new Date().toISOString();\n        console.log("✅ Gemini API SUCCESS | purpose=" + purpose + " | model=" + model + " | HTTP " + response.status);
 
         const output = response.data?.candidates?.[0]?.content?.parts?.map((part) => part.text || "").join("").trim();
         if (!output) throw new Error("Gemini returned an empty response. Please try again.");
@@ -79,7 +106,7 @@ const askGemini = async (prompt, purpose = 'content generation') => {
     console.warn("Gemini primary/fallback model attempt ended for " + model + ".");
   }
 
-  const finalError = new Error(getGeminiErrorMessage(lastError || new Error("Unknown Gemini error")));
+  recordGeminiFailure(purpose, lastError || new Error("Unknown Gemini error"));\n  const finalError = new Error(getGeminiErrorMessage(lastError || new Error("Unknown Gemini error")));
   finalError.status = lastError?.response?.status || lastError?.status || 503;
   finalError.cause = lastError;
   throw finalError;
@@ -174,4 +201,4 @@ const generateGeminiRoadmap = async (req, res) => {
   }
 };
 
-module.exports = { getInterestOptions, generateCareerRecommendations, generateGeminiRoadmap, askGemini };
+module.exports = { getInterestOptions, generateCareerRecommendations, generateGeminiRoadmap, askGemini, getGeminiStatus };
