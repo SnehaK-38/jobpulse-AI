@@ -54,7 +54,7 @@ const getOverview = async (req, res) => {
       const missingSkills = role.skills.filter((skill) => !matchedSkills.some((matched) => norm(matched) === norm(skill)));
       const skillFit = role.skills.length ? Math.round((matchedSkills.length / role.skills.length) * 100) : 0;
       const matchedInterests = role.interests.filter((interest) => interests.some((selected) => norm(selected) === norm(interest)));
-      const interestFit = role.interests.length ? Math.round(matchedInterests.length / role.interests.length * 100) : 0;
+      const interestFit = interests.length ? Math.round(matchedInterests.length / interests.length * 100) : 0;
       const demandCount = jobs.filter((job) => matchesSkill(role.skills[0], job) || norm(job.title).includes(norm(role.title))).length;
       const demandSkillCount = role.skills.reduce((count, skill) => count + jobs.filter((job) => matchesSkill(skill, job)).length, 0);
       const demandFit = jobs.length ? Math.min(100, Math.round(demandSkillCount / (jobs.length * role.skills.length) * 100)) : 0;
