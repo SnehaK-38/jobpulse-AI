@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  ArrowRight, BookOpen, BriefcaseBusiness, CheckCircle2, ChevronDown,
+  ArrowLeft, ArrowRight, BookOpen, BriefcaseBusiness, CheckCircle2,
   Compass, GraduationCap, LoaderCircle, Map, RefreshCw, Route, Save,
-  Sparkles, Target, TrendingUp
+  Target, TrendingUp
 } from "lucide-react";
 import Navbar from "../../components/Navbar/Navbar";
 import {
@@ -35,6 +35,7 @@ function CareerDevelopment() {
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [updatingId, setUpdatingId] = useState("");
+  const [rolesPage, setRolesPage] = useState(0);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
@@ -62,6 +63,9 @@ function CareerDevelopment() {
   const progress = roadmap.length ? Math.round(completed / roadmap.length * 100) : 0;
   const selectedRoleData = roles.find((role) => role.title === selectedRole);
   const recommendedRoles = useMemo(() => roles, [roles]);
+  const rolesPerPage = 6;
+  const rolesPageCount = Math.ceil(recommendedRoles.length / rolesPerPage);
+  const visibleRoles = recommendedRoles.slice(rolesPage * rolesPerPage, (rolesPage + 1) * rolesPerPage);
 
   const toggleInterest = (interest) => {
     setSelectedInterests((current) => current.includes(interest)
@@ -123,9 +127,8 @@ function CareerDevelopment() {
         {error && <div className="career-dev-alert" role="alert">{error}</div>}
         {message && <div className="career-dev-success" role="status"><CheckCircle2 size={17} />{message}</div>}
 
-        <section className="career-dev-profile-strip">
+        <section className="career-dev-profile-strip career-dev-profile-strip-two">
           <div><span>YOUR CURRENT SKILLS</span><strong>{profileSkills.length}</strong><small>{data?.profile?.targetRole || "No target role saved in profile"}</small></div>
-          <div><span>JOBPULSE LISTINGS AVAILABLE</span><strong>{data?.marketData?.totalStoredListings ?? 0}</strong><small>{data?.marketData?.listingsSampled ?? 0} recent listings sampled for demand signals (up to 300)</small></div>
           <div><span>LEARNING PROGRESS</span><strong>{progress}%</strong><small>{completed} of {roadmap.length} roadmap skills completed</small></div>
         </section>
 
@@ -139,6 +142,17 @@ function CareerDevelopment() {
               </label>
             ))}
           </div>
+          {rolesPageCount > 1 && (
+            <div className="career-dev-pagination" aria-label="Career path pages">
+              <button type="button" onClick={() => setRolesPage((page) => Math.max(0, page - 1))} disabled={rolesPage === 0} aria-label="Previous career paths">
+                <ArrowLeft size={16} /> Previous
+              </button>
+              <span>Showing {rolesPage * rolesPerPage + 1}–{Math.min((rolesPage + 1) * rolesPerPage, recommendedRoles.length)} of {recommendedRoles.length} career paths <b>·</b> Page {rolesPage + 1} of {rolesPageCount}</span>
+              <button type="button" onClick={() => setRolesPage((page) => Math.min(rolesPageCount - 1, page + 1))} disabled={rolesPage >= rolesPageCount - 1} aria-label="Next career paths">
+                Next <ArrowRight size={16} />
+              </button>
+            </div>
+          )}
           <div className="career-dev-panel-actions">
             <small>Choose up to 12 interests. Recommendations update after you save. You can change them anytime.</small>
             <button onClick={handleSavePreferences} disabled={saving || selectedInterests.length > 12}>
@@ -151,7 +165,7 @@ function CareerDevelopment() {
           <div className="career-dev-section-title"><div><span>STEP 2</span><h2>Career paths recommended for you</h2><p>All available career paths are ranked using your skill match, selected interests and signals from a recent sample of JobPulse listings.</p></div><BriefcaseBusiness /></div>
           {!profileSkills.length && <div className="career-dev-info">Your profile has no saved skills yet. Add or extract skills in My Profile to make skill-fit recommendations more useful. You can still explore roles using your interests.</div>}
           <div className="career-dev-role-grid">
-            {recommendedRoles.map((role) => (
+            {visibleRoles.map((role) => (
               <article className={selectedRole === role.title ? "career-role-card selected" : "career-role-card"} key={role.title}>
                 <div className="career-role-top"><span>{role.industry}</span><strong>{role.recommendationScore}% match</strong></div>
                 <h3>{role.title}</h3>
