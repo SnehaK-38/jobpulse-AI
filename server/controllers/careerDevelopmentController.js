@@ -49,7 +49,7 @@ const getOverview = async (req, res) => {
 
     const currentSkills = unique([...(user.skills || []), ...(user.resumeSkills || [])]);
     const interests = saved?.interests || [];
-    const roleSource = saved?.generatedRoles?.length ? saved.generatedRoles : ROLE_CATALOG;
+    const roleSource = saved?.generatedRoles || [];
     const roleResults = roleSource.map((role) => {
       const matchedSkills = role.skills.filter((skill) => currentSkills.some((current) => norm(current) === norm(skill)));
       const missingSkills = role.skills.filter((skill) => !matchedSkills.some((matched) => norm(matched) === norm(skill)));
@@ -92,7 +92,7 @@ const savePreferences = async (req, res) => {
       .slice(0, 12);
     const selectedRole = clean(req.body?.selectedRole).slice(0, 100);
     const existing = await CareerDevelopment.findOne({ userId }).select("generatedRoles").lean();
-    const validRoles = existing?.generatedRoles?.length ? existing.generatedRoles : ROLE_CATALOG;
+    const validRoles = existing?.generatedRoles || [];
     if (selectedRole && !validRoles.some((role) => norm(role.title) === norm(selectedRole))) {
       return res.status(400).json({ success: false, message: "Please select a career role from the available recommendations." });
     }
