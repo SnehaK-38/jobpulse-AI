@@ -67,6 +67,34 @@ def test_rank_recommendations_only_include_resume_relevant_jobs():
     assert ranked[0]["profileRelevant"] is True
 
 
+def test_rank_keeps_jobs_matching_one_profile_skill():
+    profile = {
+        "skills": ["Python", "React"],
+    }
+    job = {
+        "title": "Backend Developer",
+        "description": "Build and maintain Python APIs.",
+    }
+
+    previous_embeddings = server_matcher.embedding_engine
+    server_matcher.embedding_engine = ResumeEmbeddings()
+    try:
+        response = asyncio.run(
+            rank_jobs(
+                RankRequest(
+                    profile=profile,
+                    jobs=[job],
+                )
+            )
+        )
+    finally:
+        server_matcher.embedding_engine = previous_embeddings
+
+    assert response["count"] == 1
+    assert response["jobs"][0]["profileRelevant"] is True
+    assert response["jobs"][0]["matchedSkills"] == ["Python"]
+
+
 def test_rank_matches_software_engineer_profile_to_related_roles():
     profile = {
         "targetRole": "Software Engineer",

@@ -20,6 +20,7 @@ from pydantic import BaseModel, Field
 from . import external_sources
 from .matcher import (
     ProfileReader,
+    detect_job_skills,
     experience_within_tolerance,
     matcher,
 )
@@ -140,6 +141,10 @@ class RefreshRequest(BaseModel):
     )
 
     sites: Optional[List[str] | str] = None
+
+    profile: Dict[str, Any] = Field(
+        default_factory=dict
+    )
 
 # ============================================================
 # TEXT HELPERS
@@ -309,23 +314,6 @@ def recent_enough(
         timezone.utc
     )
 
-    # If posted is null, check scrapedAt
-    if posted is None:
-        scraped = parse_datetime(
-            job.get("scrapedAt")
-        )
-        if scraped:
-            posted = scraped
-        else:
-            # Newly scraped without timestamp is treated as recent
-            return True
-
-    # Allow 48 hours clock-skew / future timezone tolerance
-    if posted > now:
-        if (posted - now) > timedelta(hours=48):
-            return False
-        return True
-
     age_limit = timedelta(
         days=MAX_JOB_AGE_DAYS
     )
@@ -340,6 +328,24 @@ def recent_enough(
                 hours=hours_old
             ),
         )
+
+    scraped = parse_datetime(
+        job.get("scrapedAt")
+    )
+
+    # Use scrape time only when the provider did not supply a posting date.
+    if posted is None:
+        if scraped:
+            posted = scraped
+        else:
+            # Newly scraped without timestamp is treated as recent
+            return True
+
+    # Allow 48 hours clock-skew / future timezone tolerance
+    if posted > now:
+        if (posted - now) > timedelta(hours=48):
+            return False
+        return True
 
     return (
         now - posted
@@ -583,7 +589,7 @@ def infer_work_mode(
             return "Onsite"
         return "Remote"
 
-    return "Onsite" if location else ""
+    return ""
 
 
 def apply_work_mode(
@@ -660,7 +666,7 @@ def work_mode_match(
         )
 
     if not actual_mode:
-        return False
+        return True
 
     return (
         actual_mode.lower()
@@ -865,7 +871,7 @@ def job_type_match(
         )
 
     if not actual_type:
-        return False
+        return True
 
     return (
         actual_type.lower()
@@ -926,6 +932,18 @@ def location_match(
     job_location = normalize_location_text(
         job.get("location")
     )
+    if job_location in {
+        "",
+        "not specified",
+        "not available",
+        "unknown",
+        "unspecified",
+        "n a",
+        "na",
+    }:
+        job_location = normalize_location_text(
+            job.get("sourceSearchLocation")
+        )
 
     def city_matches(needle: str, haystack: str) -> bool:
         if needle in haystack or haystack in needle:
@@ -934,21 +952,41 @@ def location_match(
             return True
         return False
 
+    def provider_search_confirms_mumbai_region() -> bool:
+        source_location = normalize_location_text(
+            job.get("sourceSearchLocation")
+        )
+        return (
+            requested_location in {"mumbai", "bombay", "thane"}
+            and city_matches(requested_location, source_location)
+            and job_location in {
+                "mh in",
+                "maharashtra",
+                "maharashtra india",
+            }
+        )
+
     # Hybrid + Mumbai means hybrid jobs in Mumbai only.
     if requested_work_mode == "Hybrid":
-        if actual_mode != "Hybrid":
+        if actual_mode and actual_mode != "Hybrid":
             return False
         if not job_location:
             return False
-        return city_matches(requested_location, job_location)
+        return (
+            city_matches(requested_location, job_location)
+            or provider_search_confirms_mumbai_region()
+        )
 
     # On-site + Mumbai means on-site jobs in Mumbai only.
     if requested_work_mode in {"Onsite", "On-site"}:
-        if actual_mode not in {"Onsite", "On-site"}:
+        if actual_mode and actual_mode not in {"Onsite", "On-site"}:
             return False
         if not job_location:
             return False
-        return city_matches(requested_location, job_location)
+        return (
+            city_matches(requested_location, job_location)
+            or provider_search_confirms_mumbai_region()
+        )
 
     # Location-only filter: job matches city, or is Remote if no mode requested.
     if not job_location:
@@ -1016,6 +1054,8 @@ def normalize_job(
     item["company"] = clean_text(
         item.get("company")
     )
+    if item["company"].casefold() in {"nan", "none", "null"}:
+        item["company"] = "Unknown Company"
 
     item["location"] = clean_text(
         item.get("location")
@@ -1322,6 +1362,9 @@ async def call_external_sources(
     job_type: str = "",
     work_mode: str = "",
     results_wanted: int = DEFAULT_RESULTS,
+    hours_old: Optional[int] = None,
+    profile: Optional[Dict[str, Any]] = None,
+    sites: Optional[List[str] | str] = None,
 ) -> Any:
     """
     Wide retrieval.
@@ -1340,6 +1383,9 @@ async def call_external_sources(
             job_type=job_type,
             work_mode=work_mode,
             results_wanted=results_wanted,
+            hours_old=hours_old,
+            profile=profile,
+            sites=sites,
         )
     )
 
@@ -1362,6 +1408,7 @@ def normalize_and_filter(
     *,
     apply_hard_filters: bool = True,
     apply_search_filter: bool = False,
+    apply_date_filter: bool = True,
 ) -> List[Dict[str, Any]]:
 
     output = []
@@ -1388,10 +1435,7 @@ def normalize_and_filter(
             None,
         )
 
-        if not recent_enough(
-            job,
-            hours_old,
-        ):
+        if apply_date_filter and not recent_enough(job, hours_old):
             continue
 
         # ----------------------------------------------------
@@ -1547,6 +1591,9 @@ async def get_search_jobs(
         job_type=request.job_type,
         work_mode=request.work_mode,
         results_wanted=request.results_wanted,
+        hours_old=request.hours_old or MAX_JOB_AGE_DAYS * 24,
+        profile=request.profile,
+        sites=request.sites,
     )
 
     raw_jobs = flatten(
@@ -1600,6 +1647,9 @@ async def get_refresh_jobs(
         job_type=request.job_type,
         work_mode=request.work_mode,
         results_wanted=request.results_wanted,
+        hours_old=request.hours_old or MAX_JOB_AGE_DAYS * 24,
+        profile=request.profile,
+        sites=request.sites,
     )
 
     raw_jobs = flatten(
@@ -1618,8 +1668,9 @@ async def get_refresh_jobs(
     filtered = normalize_and_filter(
         raw_jobs,
         request,
-        apply_hard_filters=True,
+        apply_hard_filters=False,
         apply_search_filter=False,
+        apply_date_filter=False,
     )
 
     providers = raw_result.get("providers", []) if isinstance(raw_result, dict) else []
@@ -1633,7 +1684,7 @@ async def get_refresh_jobs(
     }
 
     logger.info(
-        "Refresh jobs after date/source/job-type/work-mode/location filters: %d",
+        "Refresh jobs after source filters: %d",
         len(filtered),
     )
 
@@ -1759,6 +1810,7 @@ def json_safe(value: Any) -> Any:
 # PREPARE RANK JOBS
 # ============================================================
 
+
 def prepare_rank_jobs(
     jobs: List[Dict[str, Any]],
     request: RankRequest,
@@ -1800,9 +1852,7 @@ def prepare_rank_jobs(
         )
 
         # Date
-        if not recent_enough(
-            job
-        ):
+        if not recent_enough(job):
             counts["too_old"] += 1
             continue
 
@@ -1843,6 +1893,13 @@ def prepare_rank_jobs(
         if not experience_within_tolerance(request.profile, job):
             counts["experience"] += 1
             continue
+
+        job["detectedJobSkills"] = clean_array(
+            [
+                *job.get("detectedJobSkills", []),
+                *detect_job_skills(job),
+            ]
+        )
 
         normalized.append(
             job
@@ -2275,14 +2332,10 @@ async def refresh_jobs(
             ).isoformat(),
 
         "hard_filters_applied":
-            True,
+            False,
 
         "hard_filter_order": [
-            "date",
             "source",
-            "job_type",
-            "work_mode",
-            "location",
         ],
 
         "skill_matching":

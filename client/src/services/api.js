@@ -7,4 +7,26 @@ const API = axios.create({
   },
 });
 
+API.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const requestUrl = error.config?.url || "";
+    const isAuthenticationRequest =
+      requestUrl.startsWith("/auth/login") ||
+      requestUrl.startsWith("/auth/signup");
+
+    if (error.response?.status === 401 && !isAuthenticationRequest) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      localStorage.removeItem("rememberMe");
+
+      if (window.location.pathname !== "/login") {
+        window.location.assign("/login?session=expired");
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
+
 export default API;

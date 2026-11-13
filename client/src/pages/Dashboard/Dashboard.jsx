@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   Search,
@@ -21,6 +21,30 @@ import Navbar from "../../components/Navbar/Navbar";
 
 import "./Dashboard.css";
 
+const JOBS_PER_PAGE = 12;
+
+const getDisplayLocation = (job, preferredLocation) => {
+  const actualLocation = cleanText(job.location);
+  const requestedLocation = cleanText(preferredLocation);
+  const sourceSearchLocation = cleanText(job.sourceSearchLocation);
+  const isMumbaiSearch = /^(mumbai|bombay|thane|navi mumbai)$/i.test(requestedLocation);
+  const providerConfirmsMumbai = isMumbaiSearch &&
+    /mumbai|bombay|thane/i.test(sourceSearchLocation);
+
+  if (
+    providerConfirmsMumbai &&
+    /^(mh|maharashtra)(\s*,?\s*(in|india))?$/i.test(actualLocation)
+  ) {
+    return `${requestedLocation} area (provider reported Maharashtra)`;
+  }
+
+  if (!actualLocation && providerConfirmsMumbai) {
+    return `${requestedLocation} search area (listing location unavailable)`;
+  }
+
+  return actualLocation || (job.isRemote ? "Remote" : "Location unavailable");
+};
+
 
 // ============================================================
 // DASHBOARD
@@ -40,10 +64,54 @@ function Dashboard() {
 
   const [sourceSummary, setSourceSummary] = useState({});
 
+  const [providerSummary, setProviderSummary] = useState({});
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  const [currentPage, setCurrentPage] = useState(1);
+
   const [searchInfo, setSearchInfo] = useState(null);
   const [savedJobIds, setSavedJobIds] = useState(new Set());
   const [savingJobId, setSavingJobId] = useState("");
 
+  const refreshTimer = useRef(null);
+
+
+  const pageCount = Math.ceil(jobs.length / JOBS_PER_PAGE);
+  const visibleJobs = jobs.slice(
+    (currentPage - 1) * JOBS_PER_PAGE,
+    currentPage * JOBS_PER_PAGE
+  );
+  const pageItems = (() => {
+    if (pageCount <= 5) {
+      return Array.from({ length: pageCount }, (_, index) => index + 1);
+    }
+
+    const pages = [...new Set([
+      1,
+      currentPage - 1,
+      currentPage,
+      currentPage + 1,
+      pageCount,
+    ].filter((page) => page >= 1 && page <= pageCount))].sort((a, b) => a - b);
+
+    return pages.reduce((items, page, index) => {
+      if (index > 0 && page - pages[index - 1] > 1) {
+        items.push(`ellipsis-${page}`);
+      }
+      items.push(page);
+      return items;
+    }, []);
+  })();
+  const unavailableProviders = Object.entries(providerSummary)
+    .filter(([, provider]) => !provider.success)
+    .map(([sourceName, provider]) =>
+      sourceName === "Gemini Search" && provider.error
+        ? `${sourceName}: ${provider.error}`
+        : sourceName
+    );
+  const availableProviderCount = Object.keys(providerSummary).length -
+    unavailableProviders.length;
 
   // ==========================================================
   // FETCH JOBS
@@ -51,7 +119,17 @@ function Dashboard() {
 
   const fetchJobs = async (filters = {}) => {
     try {
-      setLoading(true);
+      if (refreshTimer.current) {
+        clearTimeout(refreshTimer.current);
+        refreshTimer.current = null;
+      }
+
+      const backgroundPoll = filters.backgroundPoll === true;
+      if (!backgroundPoll) {
+        setLoading(true);
+        setCurrentPage(1);
+      }
+      setRefreshing(false);
       setError("");
 
       const currentSearchTerm =
@@ -97,10 +175,20 @@ function Dashboard() {
         data?.sourceSummary || {}
       );
 
+      setProviderSummary(
+        data?.providerSummary || {}
+      );
+
+      setRefreshing(Boolean(data?.refreshing));
+
 
       setSearchInfo(
         data?.search || null
       );
+
+      if (!currentLocation && data?.search?.effectiveLocation) {
+        setLocation(data.search.effectiveLocation);
+      }
 
 
       setSearched(true);
@@ -112,9 +200,20 @@ function Dashboard() {
 
       if (returnedJobs.length === 0) {
         setError(
-          data?.message ||
-            "No matching jobs were found."
+          data?.refreshing
+            ? "Searching all available job sources. Results will appear automatically."
+            : data?.message || "No matching jobs were found."
         );
+      }
+
+      if (data?.refreshing) {
+        refreshTimer.current = window.setTimeout(() => {
+          fetchJobs({
+            searchTerm: currentSearchTerm,
+            location: currentLocation,
+            backgroundPoll: true,
+          });
+        }, 5000);
       }
 
     } catch (err) {
@@ -129,6 +228,10 @@ function Dashboard() {
 
       setSourceSummary({});
 
+      setProviderSummary({});
+
+      setRefreshing(false);
+
       setSearched(true);
 
       setError(
@@ -138,7 +241,9 @@ function Dashboard() {
       );
 
     } finally {
-      setLoading(false);
+      if (filters.backgroundPoll !== true) {
+        setLoading(false);
+      }
     }
   };
 
@@ -177,6 +282,12 @@ function Dashboard() {
       }
     };
     loadSavedJobs();
+
+    return () => {
+      if (refreshTimer.current) {
+        clearTimeout(refreshTimer.current);
+      }
+    };
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -491,6 +602,25 @@ function Dashboard() {
 
         )}
 
+      {!loading && Object.keys(providerSummary).length > 0 && (
+        <div className="provider-status" role="status">
+          <strong>
+            Sources checked:{" "}
+            {availableProviderCount}
+            /{Object.keys(providerSummary).length} available
+          </strong>
+          {unavailableProviders.length > 0 && (
+            <span>Unavailable: {unavailableProviders.join(", ")}</span>
+          )}
+        </div>
+      )}
+
+      {!loading && refreshing && jobs.length > 0 && (
+        <div className="provider-status" role="status">
+          Checking all available job sources in the background; showing current matches meanwhile.
+        </div>
+      )}
+
       {/* =====================================================
           ERROR
       ===================================================== */}
@@ -592,7 +722,7 @@ function Dashboard() {
 
             <div className="jobs-list">
 
-              {jobs.map(
+              {visibleJobs.map(
                 (
                   job,
                   index
@@ -606,6 +736,7 @@ function Dashboard() {
                       index
                     }
                     job={job}
+                    preferredLocation={searchInfo?.effectiveLocation}
                     onSeeMore={openJobDetails}
                     isSaved={savedJobIds.has(String(job._id))}
                     isSaving={savingJobId === String(job._id)}
@@ -616,6 +747,46 @@ function Dashboard() {
               )}
 
             </div>
+
+            {pageCount > 1 && (
+              <nav className="job-pagination" aria-label="Job result pages">
+                <button
+                  type="button"
+                  className="pagination-direction"
+                  onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </button>
+                {pageItems.map((item) => (
+                  typeof item === "string" ? (
+                    <span className="pagination-ellipsis" key={item}>...</span>
+                  ) : (
+                    <button
+                      type="button"
+                      className="pagination-number"
+                      key={item}
+                      onClick={() => setCurrentPage(item)}
+                      aria-label={`Page ${item}`}
+                      aria-current={currentPage === item ? "page" : undefined}
+                    >
+                      {item}
+                    </button>
+                  )
+                ))}
+                <button
+                  type="button"
+                  className="pagination-direction"
+                  onClick={() => setCurrentPage((page) => Math.min(pageCount, page + 1))}
+                  disabled={currentPage === pageCount}
+                >
+                  Next
+                </button>
+                <span className="pagination-page-label">
+                  Page {currentPage} of {pageCount}
+                </span>
+              </nav>
+            )}
 
           </section>
 
@@ -659,6 +830,7 @@ function Dashboard() {
 
 function JobCard({
   job,
+  preferredLocation,
   onSeeMore,
   isSaved,
   isSaving,
@@ -788,10 +960,7 @@ function JobCard({
 
           <MapPin size={15} />
 
-          {job.location ||
-            (job.isRemote
-              ? "Remote"
-              : "Location unavailable")}
+          {getDisplayLocation(job, preferredLocation)}
 
         </span>
 
@@ -913,6 +1082,20 @@ function JobCard({
 
         </div>
 
+        <div className="quick-match-item">
+          <span>
+            Experience match
+          </span>
+          <strong>
+            {job.experienceDataAvailable === false
+              ? "Not provided"
+              : job.experienceMatchPercentage === null ||
+                  job.experienceMatchPercentage === undefined
+                ? "N/A"
+                : `${Math.round(Number(job.experienceMatchPercentage))}%`}
+          </strong>
+        </div>
+
       </div>
 
 
@@ -973,19 +1156,6 @@ function JobCard({
           MATCHING SKILLS
       =================================================== */}
 
-      {(
-        Array.isArray(
-          job.matchedSkills
-        ) &&
-        job.matchedSkills.length > 0
-      ) ||
-      (
-        Array.isArray(
-          job.missingSkills
-        ) &&
-        job.missingSkills.length > 0
-      ) ? (
-
         <div className="skill-section">
 
           {Array.isArray(
@@ -1034,6 +1204,13 @@ function JobCard({
             )}
 
 
+          {!job.profileSkillsAvailable &&
+            job.skillRequirementsAvailable && (
+              <p className="skill-data-note">
+                Your profile has no saved skills to compare against this listing.
+              </p>
+            )}
+
           {Array.isArray(
             job.missingSkills
           ) &&
@@ -1042,7 +1219,7 @@ function JobCard({
               <div className="missing-skill-group">
 
                 <h4>
-                  Missing listed requirements
+                  Skills mentioned in this job but not listed in your profile
                 </h4>
 
                 <div className="skills">
@@ -1078,10 +1255,20 @@ function JobCard({
 
             )}
 
+          {(!Array.isArray(job.missingSkills) || job.missingSkills.length === 0) &&
+            job.skillRequirementsAvailable && (
+              <p className="skill-data-note">
+                No missing listed skills based on the skills in your profile.
+              </p>
+            )}
+
+          {!job.skillRequirementsAvailable && (
+            <p className="skill-data-note">
+              This source did not provide identifiable skill requirements. Review the job description.
+            </p>
+          )}
+
         </div>
-
-      ) : null}
-
 
       {/* ===================================================
           JOB DESCRIPTION
@@ -1725,6 +1912,10 @@ function formatExperience(
   const match =
     job?.experienceMatch ||
     {};
+
+  if (match.requiredLabel) {
+    return match.requiredLabel;
+  }
 
 
   const min =

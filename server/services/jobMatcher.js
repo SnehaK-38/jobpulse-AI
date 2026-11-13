@@ -57,6 +57,97 @@ const normalizeSkill = (
   );
 };
 
+const canonicalSkillToken = (
+  skill = ""
+) => {
+  const token = normalizeText(skill)
+    .replace(/\b(?:react(?:js)?|react\.js)\b/g, "react")
+    .replace(/\b(?:node(?:js)?|node\.js)\b/g, "node")
+    .replace(/\b(?:javascript|js)\b/g, "javascript")
+    .replace(/\b(?:typescript|ts)\b/g, "typescript")
+    .replace(/\b(?:html5?|html)\b/g, "html")
+    .replace(/\b(?:css3?|css)\b/g, "css")
+    .replace(/\b(?:python3?|py)\b/g, "python")
+    .replace(/\b(?:c#|csharp)\b/g, "csharp")
+    .replace(/\b(?:c\+\+|cpp)\b/g, "cpp")
+    .replace(/\d+$/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return token;
+};
+
+const levenshteinDistance = (
+  left,
+  right
+) => {
+  const a = left || "";
+  const b = right || "";
+  const dp = Array.from({ length: a.length + 1 }, () => Array(b.length + 1).fill(0));
+
+  for (let i = 0; i <= a.length; i++) dp[i][0] = i;
+  for (let j = 0; j <= b.length; j++) dp[0][j] = j;
+
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      dp[i][j] = Math.min(
+        dp[i - 1][j] + 1,
+        dp[i][j - 1] + 1,
+        dp[i - 1][j - 1] + cost
+      );
+    }
+  }
+
+  return dp[a.length][b.length];
+};
+
+const skillsEquivalent = (
+  left = "",
+  right = ""
+) => {
+  const a = canonicalSkillToken(left);
+  const b = canonicalSkillToken(right);
+
+  if (!a || !b) {
+    return false;
+  }
+
+  if (a === b) {
+    return true;
+  }
+
+  const aliasMap = {
+    js: "javascript",
+    javascript: "javascript",
+    ts: "typescript",
+    typescript: "typescript",
+    py: "python",
+    python: "python",
+    css: "css",
+    html: "html",
+    node: "node",
+    react: "react",
+  };
+
+  const aAlias = aliasMap[a] || a;
+  const bAlias = aliasMap[b] || b;
+  if (aAlias === bAlias) {
+    return true;
+  }
+
+  const maxLength = Math.max(a.length, b.length);
+  if (maxLength <= 5) {
+    return levenshteinDistance(a, b) <= 1;
+  }
+
+  if (Math.abs(a.length - b.length) <= 1) {
+    return levenshteinDistance(a, b) <= 2;
+  }
+
+  return false;
+};
+
 
 const normalizeSkillArray = (
   skills = []
@@ -166,31 +257,25 @@ const calculateSkillMatch = (
 
   const missingSkills = [];
 
+  const textTokens = new Set(
+    jobText
+      .split(/\s+/)
+      .map((token) => canonicalSkillToken(token))
+      .filter(Boolean)
+  );
 
   for (
     const skill
     of userSkills
   ) {
+    const canonicalSkill = canonicalSkillToken(skill);
+    const isMatched = detectedJobSkills.some((detectedSkill) => skillsEquivalent(detectedSkill, skill)) ||
+      [...textTokens].some((token) => skillsEquivalent(token, canonicalSkill));
 
-    if (
-      detectedJobSkills.includes(
-        skill
-      )
-      ||
-      jobText.includes(
-        skill
-      )
-    ) {
-
-      matchedSkills.push(
-        skill
-      );
-
+    if (isMatched) {
+      matchedSkills.push(skill);
     } else {
-
-      missingSkills.push(
-        skill
-      );
+      missingSkills.push(skill);
     }
   }
 
