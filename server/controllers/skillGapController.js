@@ -305,6 +305,7 @@ const getSkillGapOverview = async (req, res) => {
       },
       matchedSkills,
       missingSkills,
+      analysedJobIds: jobs.map((job) => String(job._id)),
       message: jobs.length
         ? ""
         : "The current Job Search results could not be matched to stored job records. Refresh Job Search and try again.",
