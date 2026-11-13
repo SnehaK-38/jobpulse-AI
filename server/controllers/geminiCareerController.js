@@ -8,6 +8,27 @@ const norm = (v) => clean(v).toLowerCase().replace(/[^a-z0-9+#.]+/g, " ").trim()
 const unique = (items) => [...new Map((items || []).map((v) => [norm(v), clean(v)]).filter(([k,v]) => k && v)).values()];
 let interestCache = { value: null, expiresAt: 0 };
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const isTemporaryGeminiError = (error) => {
+  const status = error.response?.status || error.status;
+  return status === 503 || status === 502 || status === 504 || status === 429 || !status;
+};
+const getGeminiErrorMessage = (error) => {
+  const status = error.response?.status || error.status;
+  const apiMessage = error.response?.data?.error?.message;
+  if (status === 503 || status === 502 || status === 504) {
+    return "Gemini is temporarily busy. The app retried the request and tried its backup model. Please wait a minute and try again.";
+  }
+  if (status === 429) {
+    return "Gemini request limit reached for this project or model. Please wait for the limit to reset, then try again.";
+  }
+  if (status === 403) {
+    return "Google denied access to this Gemini project. Check the project's status and API key permissions in Google AI Studio.";
+  }
+  if (status === 400) return apiMessage || "Gemini rejected the request. Check the model and request configuration.";
+  return apiMessage || error.message || "Gemini could not complete the request.";
+};
+
 const askGemini = async (prompt) => {
   const key = process.env.GEMINI_API_KEY;
   if (!key) {
@@ -15,16 +36,48 @@ const askGemini = async (prompt) => {
     error.status = 503;
     throw error;
   }
-  const model = process.env.GEMINI_MODEL || "gemini-3.8-flash";
-  const url = "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent?key=" + encodeURIComponent(key);
-  const response = await axios.post(url, {
-    contents: [{ role: "user", parts: [{ text: prompt }] }],
-    generationConfig: { responseMimeType: "application/json", temperature: 0.35, maxOutputTokens: 7000 }
-  }, { timeout: 60000 });
-  const text = response.data?.candidates?.[0]?.content?.parts?.map((p) => p.text || "").join("").trim();
-  if (!text) throw new Error("Gemini returned an empty response. Please try again.");
-  try { return JSON.parse(text.replace(/^\u0060{3}(?:json)?\s*/i, "").replace(/\s*\u0060{3}$/i, "")); }
-  catch { throw new Error("Gemini returned an invalid structured response. Please try again."); }
+
+  const primaryModel = process.env.GEMINI_MODEL || "gemini-3.8-flash";
+  const fallbackModel = process.env.GEMINI_FALLBACK_MODEL || "gemini-3.5-flash-lite";
+  const models = [...new Set([primaryModel, fallbackModel])];
+  let lastError;
+
+  for (const model of models) {
+    const attempts = model === primaryModel ? 3 : 2;
+    for (let attempt = 0; attempt < attempts; attempt += 1) {
+      try {
+        const url = "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent?key=" + encodeURIComponent(key);
+        const response = await axios.post(url, {
+          contents: [{ role: "user", parts: [{ text: prompt }] }],
+          generationConfig: { responseMimeType: "application/json", temperature: 0.35, maxOutputTokens: 7000 }
+        }, { timeout: 60000 });
+
+        const output = response.data?.candidates?.[0]?.content?.parts?.map((part) => part.text || "").join("").trim();
+        if (!output) throw new Error("Gemini returned an empty response. Please try again.");
+        try {
+          return JSON.parse(output.replace(/^\u0060{3}(?:json)?\s*/i, "").replace(/\s*\u0060{3}$/i, ""));
+        } catch {
+          throw new Error("Gemini returned an invalid structured response. Please try again.");
+        }
+      } catch (error) {
+        lastError = error;
+        if (!isTemporaryGeminiError(error)) throw error;
+        const status = error.response?.status || error.status;
+        if (status === 429 && attempt === attempts - 1) break;
+        if (attempt < attempts - 1) {
+          const delay = Math.min(8000, 1000 * (2 ** attempt)) + Math.floor(Math.random() * 400);
+          console.warn("Gemini model " + model + " temporarily unavailable; retry " + (attempt + 1) + "/" + (attempts - 1) + " in " + delay + "ms.");
+          await sleep(delay);
+        }
+      }
+    }
+    console.warn("Gemini primary/fallback model attempt ended for " + model + ".");
+  }
+
+  const finalError = new Error(getGeminiErrorMessage(lastError || new Error("Unknown Gemini error")));
+  finalError.status = lastError?.response?.status || lastError?.status || 503;
+  finalError.cause = lastError;
+  throw finalError;
 };
 
 const userIdOf = (req) => req.user && (req.user._id || req.user.id || req.user.userId);
@@ -40,8 +93,8 @@ const getInterestOptions = async (req, res) => {
     interestCache = { value: interests, expiresAt: Date.now() + 12 * 60 * 60 * 1000 };
     return res.json({ success: true, interests, source: "gemini" });
   } catch (error) {
-    console.error("Gemini career interests:", error.response?.data || error.message);
-    return res.status(error.status || 502).json({ success: false, message: error.response?.data?.error?.message || error.message || "Unable to generate career interests with Gemini." });
+    console.error("Gemini career interests:", error.response?.status || error.status, getGeminiErrorMessage(error));
+    return res.status(error.status || 502).json({ success: false, message: getGeminiErrorMessage(error) });
   }
 };
 
@@ -73,8 +126,8 @@ const generateCareerRecommendations = async (req, res) => {
     ).lean();
     return res.json({ success: true, roles: savedDoc.generatedRoles, generatedAt: savedDoc.generatedRolesAt });
   } catch (error) {
-    console.error("Gemini career recommendations:", error.response?.data || error.message);
-    return res.status(error.status || 502).json({ success: false, message: error.response?.data?.error?.message || error.message || "Gemini could not generate career recommendations." });
+    console.error("Gemini career recommendations:", error.response?.status || error.status, getGeminiErrorMessage(error));
+    return res.status(error.status || 502).json({ success: false, message: getGeminiErrorMessage(error) });
   }
 };
 
@@ -110,7 +163,7 @@ const generateGeminiRoadmap = async (req, res) => {
     ).lean();
     return res.json({ success: true, roadmap: result.roadmap, selectedRole: result.selectedRole });
   } catch (error) {
-    console.error("Gemini learning roadmap:", error.response?.data || error.message);
+    console.error("Gemini learning roadmap:", error.response?.status || error.status, getGeminiErrorMessage(error));
     return res.status(error.status || 502).json({ success: false, message: error.response?.data?.error?.message || error.message || "Gemini could not generate the learning roadmap." });
   }
 };
