@@ -105,6 +105,7 @@ const generateMissingSkillsRoadmap = async (req, res) => {
       item.priority = index < highEnd ? "High" : index < mediumEnd ? "Medium" : "Low";
     });
 
+    const previousItems = new Map((saved?.missingSkillsRoadmap || []).map((item) => [norm(item.skill), item]));
     const previousStatus = new Map((saved?.missingSkillsRoadmap || []).map((item) => [norm(item.skill), item.status]));
     const prompt = "You are a practical technical learning-path designer. Create a realistic, beginner-friendly but career-relevant learning sequence for the user's missing skills. Return JSON only: { items: [{ skill, reason, estimatedWeeks, topics: string[], practiceTask, prerequisites: string[] }] }. Include exactly one item for every skill supplied; do not invent additional skills or omit any. Keep skill names exactly as supplied. Order foundational skills before skills that depend on them. A prerequisite must be another skill in this list; use an empty array when none is needed. Topics must be concrete subtopics, not vague phrases. Each practiceTask must be a small portfolio-ready exercise or mini-project. Estimated duration should be realistic for a learner studying 5-7 hours weekly, between 1 and 8 weeks per skill. Explain why each skill matters for this target role, using the provided job evidence but do not invent counts. Target role: " + clean(user.targetRole) + ". Existing skills (do not add these to the roadmap): " + JSON.stringify(currentSkills) + ". Verified missing skills and evidence: " + JSON.stringify(evidence) + ".";
     const generated = await askGemini(prompt, "missing skills roadmap");
@@ -130,6 +131,8 @@ const generateMissingSkillsRoadmap = async (req, res) => {
         resources: getLearningResources(item.skill),
         practiceTask: clean(generatedItem.practiceTask),
         prerequisites,
+        project: previousItems.get(norm(item.skill))?.project || null,
+        assessment: previousItems.get(norm(item.skill))?.assessment || null,
       };
     });
 
@@ -148,7 +151,7 @@ const generateMissingSkillsRoadmap = async (req, res) => {
 
     const result = await CareerDevelopment.findOneAndUpdate(
       { userId },
-      { $set: { missingSkillsRoadmap: items, missingSkillsRoadmapRole: clean(user.targetRole), missingSkillsRoadmapUpdatedAt: new Date() } },
+      { $set: { missingSkillsRoadmap: items, missingSkillsRoadmapRole: clean(user.targetRole), missingSkillsRoadmapUpdatedAt: new Date(), missingSkillsWeeklyPlan: null, missingSkillsWeeklyPlanRole: "" } },
       { returnDocument: "after", upsert: true, runValidators: true, setDefaultsOnInsert: true }
     ).lean();
 
@@ -182,7 +185,7 @@ const updateMissingSkillStatus = async (req, res) => {
       { returnDocument: "after", runValidators: true }
     ).lean();
     if (!saved) return res.status(404).json({ success: false, message: "Roadmap skill not found." });
-    return res.json({ success: true, roadmap: saved.missingSkillsRoadmap });
+    return res.json({ success: true });
   } catch (error) {
     console.error("Update Missing Skills Roadmap status:", error);
     return res.status(500).json({ success: false, message: "Unable to update learning progress." });
