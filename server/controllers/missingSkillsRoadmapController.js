@@ -32,11 +32,25 @@ const getMissingSkillsRoadmap = async (req, res) => {
     const saved = await CareerDevelopment.findOne({ userId })
       .select("missingSkillsRoadmap missingSkillsRoadmapRole missingSkillsRoadmapUpdatedAt")
       .lean();
+    const roadmap = (saved?.missingSkillsRoadmap || []).map((item) => {
+      const copy = { ...item };
+      if (copy.assessment) {
+        copy.assessment = {
+          title: copy.assessment.title,
+          passPercentage: copy.assessment.passPercentage,
+          verified: copy.assessment.verified,
+          generatedAt: copy.assessment.generatedAt,
+          attempts: copy.assessment.attempts || [],
+          questions: (copy.assessment.questions || []).map(({ question, options }) => ({ question, options }))
+        };
+      }
+      return copy;
+    });
     return res.json({
       success: true,
       targetRole: saved?.missingSkillsRoadmapRole || "",
-      roadmap: saved?.missingSkillsRoadmap || [],
-      updatedAt: saved?.missingSkillsRoadmapUpdatedAt || null,
+      roadmap,
+      updatedAt: saved?.missingSkillsRoadmapUpdatedAt || null,\n      weeklyPlan: saved?.missingSkillsWeeklyPlan || [],
     });
   } catch (error) {
     console.error("Get Missing Skills Roadmap:", error);
