@@ -95,7 +95,7 @@ const generateMissingSkillsRoadmap = async (req, res) => {
     const prompt = "You are a practical technical learning-path designer. Create a realistic, beginner-friendly but career-relevant learning sequence for the user's missing skills. Return JSON only: { items: [{ skill, reason, estimatedWeeks, topics: string[], practiceTask, prerequisites: string[] }] }. Include exactly one item for every skill supplied; do not invent additional skills or omit any. Keep skill names exactly as supplied. Order foundational skills before skills that depend on them. A prerequisite must be another skill in this list; use an empty array when none is needed. Topics must be concrete subtopics, not vague phrases. Each practiceTask must be a small portfolio-ready exercise or mini-project. Estimated duration should be realistic for a learner studying 5-7 hours weekly, between 1 and 8 weeks per skill. Explain why each skill matters for this target role, using the provided job evidence but do not invent counts. Target role: " + clean(user.targetRole) + ". Existing skills (do not add these to the roadmap): " + JSON.stringify(currentSkills) + ". Verified missing skills and evidence: " + JSON.stringify(evidence) + ".";
     const generated = await askGemini(prompt, "missing skills roadmap");
     const generatedItems = Array.isArray(generated.items) ? generated.items : [];
-    const generatedBySkill = new Map(generatedItems.map((item) => [norm(item.skill), item]));
+    const generatedBySkill = new Map(generatedItems.filter((item) => item && item.skill).map((item) => [norm(item.skill), item]));
     const missingGenerated = evidence.filter((item) => !generatedBySkill.has(norm(item.skill)));
     if (missingGenerated.length) {
       throw new Error("The learning plan response was incomplete for: " + missingGenerated.map((item) => item.skill).join(", ") + ". Please try again.");
@@ -103,7 +103,7 @@ const generateMissingSkillsRoadmap = async (req, res) => {
 
     const items = evidence.map((item) => {
       const generatedItem = generatedBySkill.get(norm(item.skill));
-      const prerequisites = unique(generatedItem.prerequisites || []).filter((name) => evidence.some((candidate) => norm(candidate.skill) === norm(name)) && norm(name) !== norm(item.skill));
+      const prerequisites = unique(Array.isArray(generatedItem.prerequisites) ? generatedItem.prerequisites : []).filter((name) => evidence.some((candidate) => norm(candidate.skill) === norm(name)) && norm(name) !== norm(item.skill));
       return {
         skill: item.skill,
         priority: item.priority,
@@ -112,7 +112,7 @@ const generateMissingSkillsRoadmap = async (req, res) => {
         requiredCount: item.requiredCount,
         estimatedWeeks: Math.max(1, Math.min(8, Number(generatedItem.estimatedWeeks) || 2)),
         status: previousStatus.get(norm(item.skill)) || "Not Started",
-        topics: unique(generatedItem.topics || []).slice(0, 6),
+        topics: unique(Array.isArray(generatedItem.topics) ? generatedItem.topics : []).slice(0, 6),
         resources: getLearningResources(item.skill),
         practiceTask: clean(generatedItem.practiceTask),
         prerequisites,
