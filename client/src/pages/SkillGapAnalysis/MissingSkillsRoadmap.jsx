@@ -179,7 +179,6 @@ function MissingSkillsRoadmap({ profile, missingSkills = [], jobIds = [] }) {
 
   if (!hasCurrentGaps) return (
     <section className="learning-workspace">
-      <GeminiStatus compact />
       <div className="learning-empty">
         <span className="learning-empty-icon"><GraduationCap size={30} /></span>
         <h2>{missingSkills.length ? "Refresh your job analysis" : "Your learning workspace is waiting"}</h2>
