@@ -61,6 +61,7 @@ const askGemini = async (prompt, purpose = 'content generation') => {
   if (!key) {
     const error = new Error("Gemini is not configured. Add GEMINI_API_KEY to server/.env and restart the backend.");
     error.status = 503;
+    recordGeminiFailure(purpose, error);
     throw error;
   }
 
@@ -93,7 +94,7 @@ const askGemini = async (prompt, purpose = 'content generation') => {
         }
       } catch (error) {
         lastError = error;
-        if (!isTemporaryGeminiError(error)) throw error;
+        if (!isTemporaryGeminiError(error)) { recordGeminiFailure(purpose, error); throw error; }
         const status = error.response?.status || error.status;
         if (status === 429 && attempt === attempts - 1) break;
         if (attempt < attempts - 1) {
