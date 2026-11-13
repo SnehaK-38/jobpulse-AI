@@ -7,7 +7,7 @@ const clean = (v) => String(v == null ? "" : v).trim();
 const norm = (v) => clean(v).toLowerCase().replace(/[^a-z0-9+#.]+/g, " ").trim();
 const unique = (items) => [...new Map((items || []).map((v) => [norm(v), clean(v)]).filter(([k,v]) => k && v)).values()];
 let interestCache = { value: null, expiresAt: 0 };
-const geminiHealth = { lastSuccessAt: null, lastFailureAt: null, lastFailure: null, failuresByFeature: {} };
+const geminiHealth = { lastSuccessAt: null, lastFailureAt: null, lastFailure: null, failuresByFeature: {}, successesByFeature: {} };
 const featureForPurpose = (purpose = "") => {
   const p = String(purpose).toLowerCase();
   if (p.includes("career interest") || p.includes("career recommendation") || p.includes("learning roadmap")) return "Career Navigator";
@@ -32,7 +32,7 @@ const getGeminiStatus = (req, res) => {
     else status = "error";
   } else if (!geminiHealth.lastSuccessAt) status = "not_tested";
   return res.json({ success: true, status, lastSuccessAt: geminiHealth.lastSuccessAt,
-    lastFailure: geminiHealth.lastFailure, failuresByFeature: geminiHealth.failuresByFeature });
+    lastFailure: geminiHealth.lastFailure, failuresByFeature: geminiHealth.failuresByFeature, successesByFeature: geminiHealth.successesByFeature });
 };
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -79,7 +79,7 @@ const askGemini = async (prompt, purpose = 'content generation') => {
           generationConfig: { responseMimeType: "application/json", temperature: 0.35, maxOutputTokens: 7000 }
         }, { timeout: 60000 });
 
-        geminiHealth.lastSuccessAt = new Date().toISOString();\n        console.log("✅ Gemini API SUCCESS | purpose=" + purpose + " | model=" + model + " | HTTP " + response.status);
+        geminiHealth.lastSuccessAt = new Date().toISOString();\n        geminiHealth.successesByFeature[featureForPurpose(purpose)] = geminiHealth.lastSuccessAt;\n        console.log("✅ Gemini API SUCCESS | purpose=" + purpose + " | model=" + model + " | HTTP " + response.status);
 
         const output = response.data?.candidates?.[0]?.content?.parts?.map((part) => part.text || "").join("").trim();
         if (!output) throw new Error("Gemini returned an empty response. Please try again.");
