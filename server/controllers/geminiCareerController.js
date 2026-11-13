@@ -15,7 +15,7 @@ const askGemini = async (prompt) => {
     error.status = 503;
     throw error;
   }
-  const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+  const model = process.env.GEMINI_MODEL || "gemini-3.8-flash";
   const url = "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent?key=" + encodeURIComponent(key);
   const response = await axios.post(url, {
     contents: [{ role: "user", parts: [{ text: prompt }] }],
