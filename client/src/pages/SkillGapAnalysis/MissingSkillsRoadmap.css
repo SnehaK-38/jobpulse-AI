@@ -53,3 +53,75 @@
 .learning-spin{animation:learning-spin .8s linear infinite}@keyframes learning-spin{to{transform:rotate(360deg)}}
 @media(max-width:760px){.learning-hero{padding:21px}.learning-hero-art{flex-basis:90px;height:90px}.learning-summary{grid-template-columns:1fr 1fr}.learning-summary>div:last-child{grid-column:1/-1}.learning-section-heading{align-items:flex-start;flex-direction:column}.learning-project-grid{grid-template-columns:1fr}.learning-verification-layout{grid-template-columns:1fr}.learning-verification-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.learning-week-tasks{grid-template-columns:1fr}}
 @media(max-width:480px){.learning-hero-art{display:none}.learning-summary{gap:8px}.learning-summary>div{padding:13px}.learning-nav{gap:3px}.learning-nav button{padding:0 10px;font-size:10px}.learning-skill-card{grid-template-columns:30px minmax(0,1fr);gap:9px;padding:13px}.learning-skill-number{width:29px;height:29px}.learning-skill-top{flex-direction:column}.learning-options,.learning-answer-review{grid-template-columns:1fr}.learning-week-heading{grid-template-columns:auto minmax(0,1fr)}.learning-week-heading>span{grid-column:2}.learning-verification-list{grid-template-columns:1fr}.learning-plan-progress{grid-template-columns:1fr}.learning-plan-progress .learning-progress-track{grid-column:1}.learning-submit-row{align-items:flex-start;flex-direction:column}}
+
+
+/* Readability refresh — Missing Skills Roadmap and its learning views */
+.learning-workspace{color:#202d48}
+.learning-hero p{color:#465570;font-size:14px}
+.learning-hero p strong{color:#263653}
+.learning-eyebrow,.learning-kicker{color:#5748bd;font-size:11px;letter-spacing:1px}
+.learning-summary span{color:#4e5c75;font-size:12px}
+.learning-summary strong{color:#202d48;font-size:26px}
+.learning-summary small{color:#596780;font-size:11px}
+.learning-nav button{color:#46536d;font-size:12px;min-height:43px}
+.learning-nav button:hover,.learning-nav button.active{color:#4538b2}
+.learning-alert,.learning-notice,.learning-stale{font-size:13px}
+.learning-section-heading h3{color:#202d48;font-size:24px}
+.learning-section-heading p{color:#53617a;font-size:13px}
+.learning-primary-button,.learning-secondary-button{font-size:12px;min-height:41px}
+.learning-progress-card>div:first-child span{color:#46536d;font-size:12px}
+.learning-progress-card>div:first-child strong{font-size:21px}
+.learning-progress-card small,.learning-plan-progress small{color:#53617a;font-size:11px}
+.learning-dependency-card strong{color:#283653;font-size:14px}
+.learning-dependency-card p{color:#4e5d76;font-size:13px;line-height:1.6}
+.learning-dependency-card small{color:#596780;font-size:11px}
+.learning-skill-card{background:#fff}
+.learning-skill-number{color:#5548b7}
+.learning-skill-top h4{color:#202d48;font-size:19px}
+.learning-skill-top .learning-kicker{color:#5548b7;font-size:11px}
+.learning-status-pill{font-size:11px}
+.learning-skill-meta{color:#4f5d76;font-size:12px}
+.learning-prereq{color:#4d477f;font-size:12px}
+.learning-topics summary{color:#4c40ae;font-size:13px}
+.learning-topics li{color:#394761;font-size:13px;line-height:1.6}
+.learning-resource-links a{font-size:12px;color:#4338a5}
+.learning-card-footer label,.learning-project-footer label{color:#3f4d67;font-size:12px;font-weight:700}
+.learning-card-footer select,.learning-project-footer select{color:#263550;font-size:13px;min-height:38px}
+.learning-empty{color:#35435e}
+.learning-empty strong{color:#263550;font-size:17px}
+.learning-empty p{color:#53617a;font-size:13px;line-height:1.65}
+.learning-week-card{background:#fff}
+.learning-week-badge{font-size:11px}
+.learning-week-heading h4{color:#202d48;font-size:17px}
+.learning-week-heading p{color:#53617a;font-size:12px}
+.learning-week-heading>span{color:#36445f;font-size:13px;font-weight:700}
+.learning-task{color:#33415c}
+.learning-task strong{color:#25334e;font-size:13px}
+.learning-task small{color:#53617a;font-size:12px;line-height:1.55}
+.learning-task em{color:#5748bd;font-size:11px}
+.learning-project-card{box-shadow:0 5px 18px rgba(31,39,74,.05)}
+.learning-project-card h4{color:#202d48;font-size:19px}
+.learning-project-card h5{color:#4e40b0;font-size:14px}
+.learning-project-card>p{color:#53617a;font-size:13px;line-height:1.65}
+.learning-project-meta{color:#4e5c75;font-size:12px}
+.learning-project-card details summary{color:#4c40ae;font-size:13px}
+.learning-project-card details>p{color:#53617a;font-size:12px;line-height:1.65}
+.learning-project-card details>strong{color:#2e3c57;font-size:12px}
+.learning-project-card details li{color:#46536d;font-size:12px;line-height:1.6}
+.learning-verification-item strong{color:#263550;font-size:13px}
+.learning-verification-item small{color:#53617a;font-size:11px}
+.learning-quiz-panel{color:#263550}
+.learning-quiz-empty strong,.learning-quiz-empty h4,.learning-result-panel strong{color:#263550;font-size:16px}
+.learning-quiz-empty p,.learning-result-panel>p{color:#53617a;font-size:12px;line-height:1.65}
+.learning-quiz-heading h4{color:#202d48;font-size:17px}
+.learning-quiz-heading>span{color:#53617a;font-size:12px}
+.learning-question legend{color:#263550;font-size:14px;line-height:1.6}
+.learning-question legend span{color:#5748bd;font-size:11px}
+.learning-options label{color:#394761;font-size:13px;line-height:1.5;padding:11px}
+.learning-options label.chosen{color:#4438a5}
+.learning-submit-row>span{color:#53617a;font-size:12px}
+.learning-answer-review strong{color:#293752;font-size:12px}
+.learning-answer-review p{color:#4e5c75;font-size:11px;line-height:1.6}
+.learning-loading{color:#46536d;font-size:14px}
+.learning-workspace button:focus-visible,.learning-workspace a:focus-visible,.learning-workspace select:focus-visible,.learning-workspace input:focus-visible{outline:3px solid #9b91f5;outline-offset:2px}
+@media(max-width:760px){.learning-section-heading h3{font-size:21px}.learning-hero p{font-size:13px}}
