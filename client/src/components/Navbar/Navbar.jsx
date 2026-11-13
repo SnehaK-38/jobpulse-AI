@@ -1,7 +1,7 @@
 import "./Navbar.css";
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { ChevronDown, LayoutDashboard, LogOut, Settings, UserRound, Target, Bookmark, Compass } from "lucide-react";
+import { ChevronDown, LayoutDashboard, LogOut, Settings, UserRound, Target, Bookmark, Compass, Bot } from "lucide-react";
 import { getProfile } from "../../services/profileService";
 
 function Navbar({ dashboardMode = false }) {
@@ -61,6 +61,7 @@ function Navbar({ dashboardMode = false }) {
             <li><Link to="/saved-jobs" className="saved-jobs-nav-link"><Bookmark size={16} /> Saved Jobs</Link></li>
             <li><Link to="/skill-gap" className="skill-gap-nav-link"><Target size={16} /> Skill Gap Analysis</Link></li>
             <li><Link to="/career-development" className="career-development-nav-link"><Compass size={16} /> Career Navigator</Link></li>
+            <li><Link to="/career-assistant" className="career-assistant-nav-link"><Bot size={16} /> AI Assistant</Link></li>
           </>
         )}
 
