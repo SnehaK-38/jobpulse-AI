@@ -140,7 +140,7 @@ function CareerAssistant() {
               <textarea ref={inputRef} value={input} onChange={(event) => setInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); send(); } }} placeholder="Ask anything about your career..." rows={1} maxLength={2000} disabled={sending || loading} />
               <div className="assistant-composer-footer"><span>Enter to send · Shift + Enter for a new line</span><button type="submit" disabled={!input.trim() || sending || loading}>{sending ? <LoaderCircle size={18} /> : <ArrowUp size={19} />}</button></div>
             </form>
-            <p className="assistant-disclaimer">AI guidance can make mistakes. Review important career decisions and verify job details before applying.</p>
+            <p className="assistant-disclaimer">Your relevant profile, resume text and learning context are sent to Gemini to generate personalised replies. AI guidance can make mistakes; verify important decisions and job details.</p>
           </section>
         </div>
       </main>
