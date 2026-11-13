@@ -115,6 +115,7 @@ function CareerDevelopment() {
     <>
       <Navbar dashboardMode />
       <main className="career-dev-page">
+        <GeminiStatus compact />
         <section className="career-dev-hero">
           <div>
             <span className="career-dev-eyebrow"><Compass size={15} /> CAREER TRAJECTORY INTELLIGENCE</span>
