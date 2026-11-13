@@ -20,6 +20,7 @@ const dashboardRoutes = require("./routes/dashboardRoutes");
 const skillGapRoutes = require("./routes/skillGapRoutes");
 const jobShortlistRoutes = require("./routes/jobShortlistRoutes");
 const careerDevelopmentRoutes = require("./routes/careerDevelopmentRoutes");
+const careerAssistantRoutes = require("./routes/careerAssistantRoutes");
 
 const connectDB = require("./config/db");
 connectDB();
@@ -45,6 +46,7 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/skill-gap", skillGapRoutes);
 app.use("/api/job-shortlist", jobShortlistRoutes);
 app.use("/api/career-development", careerDevelopmentRoutes);
+app.use("/api/career-assistant", careerAssistantRoutes);
 
 app.use((error, req, res, next) => {
   console.error("Express error:", error);
