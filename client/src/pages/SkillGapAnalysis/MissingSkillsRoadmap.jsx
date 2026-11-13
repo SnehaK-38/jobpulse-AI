@@ -11,7 +11,6 @@ import {
   generateMissingSkillAssessment, submitMissingSkillAssessment
 } from "../../services/skillGapService";
 import "./MissingSkillsRoadmap.css";
-import GeminiStatus from "../../components/GeminiStatus/GeminiStatus";
 
 const VIEWS = [
   { id: "overview", label: "Roadmap", icon: Target },
@@ -180,7 +179,6 @@ function MissingSkillsRoadmap({ profile, missingSkills = [], jobIds = [] }) {
 
   if (!hasCurrentGaps) return (
     <section className="learning-workspace">
-      <GeminiStatus compact />
       <GeminiStatus compact />
       <div className="learning-empty">
         <span className="learning-empty-icon"><GraduationCap size={30} /></span>
