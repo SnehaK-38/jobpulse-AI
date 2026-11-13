@@ -157,3 +157,39 @@
 .skill-gap-view-tabs button { display:inline-flex; align-items:center; justify-content:center; gap:7px; min-height:35px; padding:0 13px; border:0; border-radius:8px; background:transparent; color:#7b8499; font-size:12px; font-weight:700; cursor:pointer; }
 .skill-gap-view-tabs button.active { background:#f0edff; color:#5d50ce; box-shadow:inset 0 0 0 1px #e4dfff; }
 @media (max-width:480px) { .skill-gap-view-tabs { width:100%; } .skill-gap-view-tabs button { flex:1; padding:0 8px; font-size:11px; } }
+
+
+/* Readability refresh — Skill Gap Analysis only */
+.skill-gap-page{background:#f3f5fb;color:#17233d}
+.skill-gap-heading p,.panel-description{color:#53617a;font-size:14px}
+.skill-gap-stat div>span{color:#46536d;font-size:13px}
+.skill-gap-stat small{color:#5d6980;font-size:11px}
+.hero-copy p,.hero-pills span,.hero-total span,.hero-total small{color:#f3f4ff}
+.panel-description{font-size:13px}
+.panel-footnote{color:#596780;font-size:12px}
+.gap-bar-value,.gap-bar-column strong{color:#34415c;font-size:14px}
+.gap-bar-column small{color:#596780;font-size:11px}
+.coverage-legend{color:#4f5d76;font-size:12px}
+.coverage-explainer p{color:#4e5b74;font-size:12px;line-height:1.65}
+.coverage-explainer strong{font-size:13px}
+.target-role span{color:#625b91;font-size:11px}
+.target-role strong{font-size:14px}
+.priority-rank{color:#5d6980;font-size:12px}
+.priority-skill-main strong{font-size:14px;color:#202d48}
+.priority-skill-main span,.priority-skill-main .priority-requirement-count{color:#53617a;font-size:12px}
+.priority-badge{font-size:11px}
+.priority-breakdown summary{font-size:12px}
+.breakdown-item>div:first-child{font-size:11px;color:#46536d}
+.breakdown-item small,.breakdown-note{color:#58657c;font-size:11px}
+.priority-more{color:#53617a;font-size:12px}
+.panel-empty{color:#53617a;font-size:13px}
+.skill-gap-empty p{color:#4f5d76;font-size:13px}
+.skill-gap-empty strong{font-size:14px}
+.matched-summary p,.priority-method p{color:#53617a;font-size:12px}
+.skill-gap-loading{color:#46536d;font-size:15px}
+.priority-pagination{color:#53617a;font-size:12px}
+.skill-gap-view-tabs button{color:#4e5b74;font-size:13px;min-height:40px}
+.skill-gap-view-tabs button.active{color:#4437ae}
+.skill-gap-refresh{font-size:13px}
+.skill-gap-page button:focus-visible,.skill-gap-page a:focus-visible,.skill-gap-page select:focus-visible{outline:3px solid #9b91f5;outline-offset:2px}
+@media(max-width:650px){.skill-gap-heading p{font-size:13px}.skill-gap-stat small{font-size:11px}}
