@@ -96,14 +96,8 @@ function CareerAssistant() {
   };
 
   const startConversation = async (prompt = "") => {
-    try {
-      setError("");
-      const result = await createCareerAssistantConversation();
-      await refreshHistory();
-      setActiveId(result.conversation.id);
-      setMessages([]); setSuggestions([]); setContextUsed(null); setInput(prompt);
-      setTimeout(() => inputRef.current?.focus(), 50);
-    } catch (err) { setError(err?.response?.data?.message || "Unable to start a new conversation."); }
+    if (messages.length) { setConfirm({ type: "new", prompt }); return; }
+    await createNewConversation(prompt);
   };
 
   useEffect(() => {
@@ -133,9 +127,18 @@ function CareerAssistant() {
   };
 
   const confirmSwitch = async () => {
-    const id = confirm?.id;
+    const pending = confirm;
     setConfirm(null);
-    if (id) await openConversation(id);
+    if (pending?.type === "new") { setConfirm(null); await createNewConversation(pending.prompt || ""); }
+    else if (pending?.id) await openConversation(pending.id);
+  };
+
+  const createNewConversation = async (prompt = "") => {
+    try {
+      const result = await createCareerAssistantConversation();
+      await refreshHistory(); setActiveId(result.conversation.id); setMessages([]); setSuggestions([]); setContextUsed(null); setInput(prompt);
+      setTimeout(() => inputRef.current?.focus(), 50);
+    } catch (err) { setError(err?.response?.data?.message || "Unable to start a new conversation."); }
   };
 
   const send = async (value = input) => {
@@ -239,8 +242,8 @@ function CareerAssistant() {
         <section className="assistant-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="assistant-confirm-title">
           <button className="assistant-modal-close" onClick={() => setConfirm(null)} aria-label="Close"><X size={18} /></button>
           <span className="assistant-modal-icon">{confirm.type === "delete" ? <Trash2 size={21} /> : <MessageCircle size={21} />}</span>
-          <h2 id="assistant-confirm-title">{confirm.type === "delete" ? "Delete this conversation?" : "Switch conversation?"}</h2>
-          <p>{confirm.type === "delete" ? "This chat and its messages will be permanently deleted. Other conversations will remain saved." : "Your current conversation is already saved. You can return to it anytime from Recent Chats."}</p>
+          <h2 id="assistant-confirm-title">{confirm.type === "delete" ? "Delete this conversation?" : confirm.type === "new" ? "Start a new conversation?" : "Switch conversation?"}</h2>
+          <p>{confirm.type === "delete" ? "This chat and its messages will be permanently deleted. Other conversations will remain saved." : "Your current conversation is already saved. You can return to it anytime from Recent Chats. Do you want to continue?"}</p>
           <div className="assistant-modal-actions"><button className="modal-secondary" onClick={() => setConfirm(null)}>Cancel</button><button className="modal-primary" onClick={confirm.type === "delete" ? removeConversation : confirmSwitch}>{confirm.type === "delete" ? "Delete chat" : "Switch chat"}</button></div>
         </section>
       </div>}
