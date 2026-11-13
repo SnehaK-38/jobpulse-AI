@@ -5,6 +5,16 @@ const CareerDevelopment = require("../models/CareerDevelopment");
 const CareerAssistantConversation = require("../models/CareerAssistantConversation");
 const { askGemini } = require("./geminiCareerController");
 
+let chatIndexesReady = false;
+const ensureChatIndexes = async () => {
+  if (chatIndexesReady) return;
+  try { await CareerAssistantConversation.collection.dropIndex("userId_1"); } catch (error) {
+    if (error.codeName !== "IndexNotFound" && error.code !== 27) console.warn("Career Assistant index migration:", error.message);
+  }
+  await CareerAssistantConversation.collection.createIndex({ userId: 1 });
+  chatIndexesReady = true;
+};
+
 const clean = (value) => String(value == null ? "" : value).trim();
 const userIdOf = (req) => req.user && (req.user._id || req.user.id || req.user.userId);
 const publicMessages = (messages) => (messages || []).map((message) => ({
@@ -18,6 +28,7 @@ const listConversations = async (req, res) => {
   try {
     const userId = userIdOf(req);
     if (!userId) return res.status(401).json({ success: false, message: "Please log in first." });
+    await ensureChatIndexes();
     const conversations = await CareerAssistantConversation.find({ userId }).select("title messages createdAt updatedAt").sort({ updatedAt: -1 }).lean();
     return res.json({ success: true, conversations: conversations.map((item) => ({
       id: String(item._id), title: item.title || item.messages?.[0]?.content?.slice(0, 48) || "New conversation",
@@ -34,6 +45,7 @@ const createConversation = async (req, res) => {
   try {
     const userId = userIdOf(req);
     if (!userId) return res.status(401).json({ success: false, message: "Please log in first." });
+    await ensureChatIndexes();
     const conversation = await CareerAssistantConversation.create({ userId, title: "New conversation", messages: [] });
     return res.status(201).json({ success: true, conversation: { id: String(conversation._id), title: conversation.title, messages: [] } });
   } catch (error) {
