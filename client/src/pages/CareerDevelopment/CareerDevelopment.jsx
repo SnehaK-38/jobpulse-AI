@@ -5,6 +5,7 @@ import {
   Target, TrendingUp
 } from "lucide-react";
 import Navbar from "../../components/Navbar/Navbar";
+import GeminiStatus from "../../components/GeminiStatus/GeminiStatus";
 import {
   createGeminiLearningRoadmap, generateGeminiCareerRecommendations, getCareerDevelopment, getGeminiInterestOptions, saveCareerPreferences, updateLearningStatus
 } from "../../services/careerDevelopmentService";
@@ -107,7 +108,7 @@ function CareerDevelopment() {
     } finally { setUpdatingId(""); }
   };
 
-  if (loading) return <><Navbar dashboardMode /><main className="career-dev-page"><div className="career-dev-loading"><LoaderCircle className="career-dev-spin" /> Loading your career workspace and Gemini interest options...</div></main></>;
+  if (loading) return <><Navbar dashboardMode /><main className="career-dev-page">\n        <GeminiStatus compact /><div className="career-dev-loading"><LoaderCircle className="career-dev-spin" /> Loading your career workspace and Gemini interest options...</div></main></>;
 
   return (
     <>
