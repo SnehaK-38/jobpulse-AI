@@ -108,7 +108,8 @@ function CareerDevelopment() {
     } finally { setUpdatingId(""); }
   };
 
-  if (loading) return <><Navbar dashboardMode /><main className="career-dev-page">\n        <GeminiStatus compact /><div className="career-dev-loading"><LoaderCircle className="career-dev-spin" /> Loading your career workspace and Gemini interest options...</div></main></>;
+  if (loading) return <><Navbar dashboardMode /><main className="career-dev-page">
+        <GeminiStatus compact /><div className="career-dev-loading"><LoaderCircle className="career-dev-spin" /> Loading your career workspace and Gemini interest options...</div></main></>;
 
   return (
     <>
