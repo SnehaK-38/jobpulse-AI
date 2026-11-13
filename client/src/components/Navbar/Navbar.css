@@ -635,3 +635,41 @@ border-radius:10px;
   .theme-toggle span { display: none; }
   .theme-toggle { width: 38px; padding: 8px; }
 }
+
+
+/* Keep the theme control at the far right, immediately after the profile menu. */
+.nav-links .theme-toggle-item {
+  display: flex;
+  align-items: center;
+  margin-left: 2px;
+  flex: 0 0 auto;
+}
+.nav-links .theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 8px 12px;
+  border: 1px solid rgba(148, 163, 184, .42);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .12);
+  color: #f8fafc;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.nav-links .theme-toggle:hover {
+  background: rgba(255, 255, 255, .2);
+  border-color: #7dd3fc;
+}
+.nav-links .theme-toggle:focus-visible {
+  outline: 2px solid #67e8f9;
+  outline-offset: 3px;
+}
+@media (max-width: 768px) {
+  .nav-links .theme-toggle span { display: none; }
+  .nav-links .theme-toggle { width: 38px; padding: 8px; }
+}
