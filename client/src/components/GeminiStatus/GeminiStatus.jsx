@@ -24,7 +24,7 @@ function GeminiStatus({ compact = false }) {
     } finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { refresh(); }, [refresh]);
+  useEffect(() => { refresh(); const interval = window.setInterval(refresh, 15000); return () => window.clearInterval(interval); }, [refresh]);
 
   const state = data?.status || "not_tested";
   const stateText = {
@@ -47,10 +47,10 @@ function GeminiStatus({ compact = false }) {
       <button className="gemini-status-refresh" onClick={refresh} disabled={loading} title="Refresh Gemini status">{loading ? <LoaderCircle className="gemini-spin" size={16} /> : <RefreshCw size={16} />}<span>Refresh</span></button>
     </div>
     <div className={`gemini-status-state ${state}`}><Icon size={17} /><strong>{stateText}</strong>{data?.lastSuccessAt && <small>Last successful API response: {prettyTime(data.lastSuccessAt)}</small>}</div>
-    {data?.lastFailure && <div className="gemini-last-failure"><div className="gemini-failure-heading"><AlertTriangle size={15} /><strong>Last failure location</strong></div><b>{LABELS[data.lastFailure.feature] || data.lastFailure.feature}</b><p>{data.lastFailure.message}</p><small>{data.lastFailure.status ? `HTTP ${data.lastFailure.status} · ` : ""}{prettyTime(data.lastFailure.at)}</small></div>}
+    {data?.lastFailure && <div className="gemini-last-failure"><div className="gemini-failure-heading"><AlertTriangle size={15} /><strong>Most recent feature failure</strong></div><b>{LABELS[data.lastFailure.feature] || data.lastFailure.feature}</b><p>{data.lastFailure.message}</p><small>{data.lastFailure.status ? `HTTP ${data.lastFailure.status} · ` : ""}{prettyTime(data.lastFailure.at)}</small></div>}
     {activeFailures.length > 0 && <div className="gemini-feature-failures"><strong>Feature-specific issues</strong>{activeFailures.map(([feature, failure]) => <div key={feature}><span>{LABELS[feature] || feature}</span><small>{failure.status ? `HTTP ${failure.status} · ` : ""}{failure.message}</small></div>)}</div>}
     {error && <p className="gemini-status-error">{error}</p>}
-    <p className="gemini-status-footnote"><Clock3 size={12} /> Status reflects requests made since the backend was last restarted. Refresh checks recorded results; it does not consume a Gemini API request.</p>
+    <p className="gemini-status-footnote"><Clock3 size={12} /> Updates every 15 seconds using recorded Gemini requests since the backend was last restarted. This status check does not consume a Gemini API request.</p>
   </section>;
 }
 export default GeminiStatus;
