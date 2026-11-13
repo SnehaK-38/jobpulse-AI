@@ -127,7 +127,7 @@ function MissingSkillsRoadmap({ profile, missingSkills = [], jobIds = [] }) {
           <GraduationCap size={27} />
           <strong>Your learning roadmap is ready to be created</strong>
           <p>JobPulse has identified {missingSkills.length} missing skills. Generate a roadmap to organise them by job demand, learning dependencies and practical exercises.</p>
-          <button className="missing-roadmap-inline-button" onClick={handleGenerate} disabled={generating}>
+          <button className="missing-roadmap-inline-button" onClick={handleGenerate} disabled={generating || !targetRole}>
             {generating ? "Generating..." : "Create learning roadmap"} <ArrowUpRight size={15} />
           </button>
         </div>
