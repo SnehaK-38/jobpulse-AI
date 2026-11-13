@@ -8,14 +8,14 @@ const { getLearningResources } = require("../data/learningResourceCatalog");
 const clean = (value) => String(value == null ? "" : value).trim();
 const norm = (value) => clean(value).toLowerCase().replace(/[^a-z0-9+#.]+/g, " ").trim();
 const userIdOf = (req) => req.user && (req.user._id || req.user.id || req.user.userId);
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const unique = (values) => [...new Map((values || []).map((value) => [norm(value), clean(value)]).filter(([key, value]) => key && value)).values()];
-const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\\]\\]/g, "\\const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\$&");");
 
 const skillAppearsInJob = (skill, job) => {
   const structured = [...(job.skills || []), ...(job.detectedJobSkills || [])];
   if (structured.some((value) => norm(value) === norm(skill))) return true;
   const text = [job.title, job.description, job.requirements, job.qualifications, job.responsibilities].map(clean).join(" ").toLowerCase();
-  const pattern = escapeRegex(skill).replace(/\\s+/g, "\\s+");
+  const pattern = escapeRegex(skill).split(/\s+/).join("\\s+");
   return new RegExp("(^|[^a-z0-9])" + pattern + "(?=$|[^a-z0-9])", "i").test(text);
 };
 
