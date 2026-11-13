@@ -9,6 +9,7 @@ import Dashboard from "./pages/Dashboard/Dashboard";
 import JobDetails from "./pages/JobDetails/JobDetails";
 import SkillGapAnalysis from "./pages/SkillGapAnalysis/SkillGapAnalysis";
 import SavedJobs from "./pages/SavedJobs/SavedJobs";
+import CareerDevelopment from "./pages/CareerDevelopment/CareerDevelopment";
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
       <Route path="/job-details" element={<JobDetails />} />
       <Route path="/skill-gap" element={<SkillGapAnalysis />} />
       <Route path="/saved-jobs" element={<SavedJobs />} />
+      <Route path="/career-development" element={<CareerDevelopment />} />
     </Routes>
   );
 }
