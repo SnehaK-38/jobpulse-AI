@@ -32,3 +32,12 @@
 .career-dev-pagination button:disabled{opacity:.4;cursor:not-allowed}
 @media(max-width:900px){.career-dev-role-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:620px){.career-dev-profile-strip-two{grid-template-columns:1fr}.career-dev-role-grid{grid-template-columns:1fr}.career-dev-pagination{flex-wrap:wrap}.career-dev-pagination>span{order:-1;width:100%}}
+
+/* Keep pagination directly beneath the career cards and align its controls. */
+.career-dev-pagination{width:100%;box-sizing:border-box;margin:20px 0 2px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.career-dev-pagination button{min-width:102px}
+.career-dev-pagination>span{flex:1;text-align:center;line-height:1.5}
+.career-dev-score-breakdown{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:10px;border-radius:8px;background:#f7f7fb;color:#81899b;font-size:10px}
+.career-dev-score-breakdown span{display:flex;flex-direction:column;gap:4px}
+.career-dev-score-breakdown b{font-size:14px;color:#39445e}
+@media(max-width:620px){.career-dev-pagination{flex-wrap:wrap}.career-dev-pagination>span{order:-1;width:100%;flex-basis:100%}}
