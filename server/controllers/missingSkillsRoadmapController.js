@@ -119,7 +119,10 @@ const generateMissingSkillsRoadmap = async (req, res) => {
       };
     });
 
-    if (items.some((item) => item.topics.length < 2 || !item.practiceTask)) {\n      throw new Error("The learning plan is missing practical topics or project tasks. Please regenerate it.");\n    }\n\n    // Respect prerequisite relationships while keeping higher-demand skills near the top.
+    if (items.some((item) => item.topics.length < 2 || !item.practiceTask)) {
+      throw new Error("The learning plan is missing practical topics or project tasks. Please regenerate it.");
+    }
+
     const priorityRank = { High: 0, Medium: 1, Low: 2 };
     items.sort((a, b) => {
       const aPrerequisite = items.some((candidate) => candidate.prerequisites.some((name) => norm(name) === norm(a.skill)));
