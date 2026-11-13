@@ -1,6 +1,10 @@
 import API from "./api";
 import { getDashboardJobs } from "./dashboardService";
 
+const auth = () => ({
+  headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+});
+
 export const getSkillGapOverview = async () => {
   const jobResults = await getDashboardJobs({
     search_term: "",
@@ -11,14 +15,16 @@ export const getSkillGapOverview = async () => {
     ? jobResults.jobs.map((job) => job._id).filter(Boolean)
     : [];
 
-  const response = await API.post(
-    "/skill-gap/overview",
-    { jobIds },
-    {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-    }
-  );
+  const response = await API.post("/skill-gap/overview", { jobIds }, auth());
+  return { ...response.data, jobIds };
+};
+
+export const generateMissingSkillsRoadmap = async (payload) => {
+  const response = await API.post("/skill-gap/roadmap", payload, auth());
+  return response.data;
+};
+
+export const updateMissingSkillStatus = async (itemId, status) => {
+  const response = await API.patch(`/skill-gap/roadmap/${itemId}/status`, { status }, auth());
   return response.data;
 };
