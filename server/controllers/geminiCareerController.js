@@ -115,7 +115,7 @@ const generateCareerRecommendations = async (req, res) => {
     const data = await askGemini("Act as an independent occupational research and career advisor. Generate 18 to 30 realistic IT/technology career paths relevant to selected interests. Define each role's standard required competencies independently of the user's current skills. Do NOT copy, favour, or limit required skills to the user's existing skills. Include genuine role-specific technical skills, tools, methods and domain knowledge; avoid generic editor/tool names (such as VS Code) and generic skills unless essential. Each role must have 7-12 concrete role-specific skills, 2-5 relevant interest tags and 2-3 plausible progression roles. Return JSON only with { roles: [{ title, industry, interests: string[], skills: string[], nextRoles: string[], summary }] }. Every role must match at least one selected interest, but retain all relevant interest tags rather than filtering them to selected interests. Do not invent job counts. Avoid duplicate roles and include entry-level through specialist roles. User interests: " + JSON.stringify(interests) + ". The following profile skills are for matching only; do not copy them into the role requirements unless they are genuinely core to the occupation: " + JSON.stringify(skills) + ". Target role: " + clean(user.targetRole) + ". Preferred industry: " + clean(user.preferredIndustry) + ". Job listing sample (examples only, not a census): " + JSON.stringify(jobContext));
     const roles = (data.roles || []).map((r) => ({
       title: clean(r.title).slice(0, 100), industry: clean(r.industry).slice(0, 80),
-      interests: unique(r.interests).filter((x) => interests.some((i) => norm(i) === norm(x))),
+      interests: unique(r.interests).slice(0, 8),
       skills: unique(r.skills).slice(0, 15), nextRoles: unique(r.nextRoles).slice(0, 5),
       summary: clean(r.summary).slice(0, 350)
     })).filter((r) => r.title && r.skills.length >= 3 && r.interests.length);
@@ -160,7 +160,7 @@ const generateGeminiRoadmap = async (req, res) => {
     if (items.length < (roadmapTargets.length ? Math.min(2, roadmapTargets.length) : 3)) throw new Error("Gemini returned an incomplete learning roadmap. Please try again.");
     const result = await CareerDevelopment.findOneAndUpdate(
       { userId }, { $set: { selectedRole: role.title, roadmap: items, roadmapUpdatedAt: new Date() } },
-      { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true }
+      { returnDocument: "after", upsert: true, runValidators: true, setDefaultsOnInsert: true }
     ).lean();
     return res.json({ success: true, roadmap: result.roadmap, selectedRole: result.selectedRole });
   } catch (error) {
