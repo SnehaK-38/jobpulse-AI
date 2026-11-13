@@ -14,11 +14,39 @@ const publicMessages = (messages) => (messages || []).map((message) => ({
   createdAt: message.createdAt
 }));
 
+const listConversations = async (req, res) => {
+  try {
+    const userId = userIdOf(req);
+    if (!userId) return res.status(401).json({ success: false, message: "Please log in first." });
+    const conversations = await CareerAssistantConversation.find({ userId }).select("title messages createdAt updatedAt").sort({ updatedAt: -1 }).lean();
+    return res.json({ success: true, conversations: conversations.map((item) => ({
+      id: String(item._id), title: item.title || item.messages?.[0]?.content?.slice(0, 48) || "New conversation",
+      preview: item.messages?.length ? item.messages[item.messages.length - 1].content.slice(0, 85) : "No messages yet",
+      updatedAt: item.updatedAt, messageCount: item.messages?.length || 0
+    })) });
+  } catch (error) {
+    console.error("List Career Assistant conversations:", error);
+    return res.status(500).json({ success: false, message: "Unable to load chat history." });
+  }
+};
+
+const createConversation = async (req, res) => {
+  try {
+    const userId = userIdOf(req);
+    if (!userId) return res.status(401).json({ success: false, message: "Please log in first." });
+    const conversation = await CareerAssistantConversation.create({ userId, title: "New conversation", messages: [] });
+    return res.status(201).json({ success: true, conversation: { id: String(conversation._id), title: conversation.title, messages: [] } });
+  } catch (error) {
+    console.error("Create Career Assistant conversation:", error);
+    return res.status(500).json({ success: false, message: "Unable to start a new conversation." });
+  }
+};
+
 const getConversation = async (req, res) => {
   try {
     const userId = userIdOf(req);
     if (!userId) return res.status(401).json({ success: false, message: "Please log in to use Career Assistant." });
-    const conversation = await CareerAssistantConversation.findOne({ userId }).select("messages updatedAt").lean();
+    const conversation = await CareerAssistantConversation.findOne({ _id: req.params.id, userId }).select("title messages updatedAt").lean();
     return res.json({ success: true, messages: publicMessages(conversation?.messages || []) });
   } catch (error) {
     console.error("Load Career Assistant conversation:", error);
@@ -38,9 +66,10 @@ const sendMessage = async (req, res) => {
       User.findById(userId).select("fullName targetRole lookingFor preferredLocation preferredWorkMode preferredIndustry skills resumeSkills resumeText projects experience certifications education yearsOfExperience").lean(),
       CareerDevelopment.findOne({ userId }).lean(),
       JobShortlist.find({ userId }).sort({ createdAt: -1 }).limit(15).lean(),
-      CareerAssistantConversation.findOne({ userId })
+      CareerAssistantConversation.findOne({ _id: req.params.id, userId })
     ]);
     if (!user) return res.status(404).json({ success: false, message: "Your profile could not be found." });
+    if (!conversation) return res.status(404).json({ success: false, message: "This conversation was not found." });
 
     const savedIds = shortlist.map((item) => item.jobId).filter(Boolean);
     const savedJobs = await Job.find({ _id: { $in: savedIds } })
@@ -117,7 +146,8 @@ const sendMessage = async (req, res) => {
     const reply = clean(generated.reply).slice(0, 6000);
     if (!reply) return res.status(502).json({ success: false, message: "Gemini returned an empty answer. Please try again." });
 
-    const doc = conversation || new CareerAssistantConversation({ userId, messages: [] });
+    const doc = conversation;
+    if (doc.messages.length === 0) doc.title = message.replace(/\s+/g, " ").slice(0, 52) || "New conversation";
     doc.messages.push({ role: "user", content: message });
     doc.messages.push({ role: "assistant", content: reply });
     if (doc.messages.length > 40) doc.messages = doc.messages.slice(-40);
@@ -146,16 +176,17 @@ const sendMessage = async (req, res) => {
   }
 };
 
-const clearConversation = async (req, res) => {
+const deleteConversation = async (req, res) => {
   try {
     const userId = userIdOf(req);
     if (!userId) return res.status(401).json({ success: false, message: "Please log in first." });
-    await CareerAssistantConversation.deleteOne({ userId });
-    return res.json({ success: true, message: "Conversation cleared." });
+    const result = await CareerAssistantConversation.deleteOne({ _id: req.params.id, userId });
+    if (!result.deletedCount) return res.status(404).json({ success: false, message: "Conversation not found." });
+    return res.json({ success: true, message: "Conversation deleted." });
   } catch (error) {
     console.error("Clear Career Assistant conversation:", error);
     return res.status(500).json({ success: false, message: "Unable to clear your conversation." });
   }
 };
 
-module.exports = { getConversation, sendMessage, clearConversation };
+module.exports = { listConversations, createConversation, getConversation, sendMessage, deleteConversation };
