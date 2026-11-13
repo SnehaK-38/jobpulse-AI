@@ -2,7 +2,6 @@ const mongoose = require("mongoose");
 const CareerDevelopment = require("../models/CareerDevelopment");
 const User = require("../models/User");
 const Job = require("../models/Job");
-const { ROLE_CATALOG, LEARNING_GUIDES } = require("../data/careerRoleCatalog");
 
 const clean = (value) => String(value == null ? "" : value).trim();
 const norm = (value) => clean(value).toLowerCase().replace(/[^a-z0-9+#.]+/g, " ").trim();
@@ -108,60 +107,6 @@ const savePreferences = async (req, res) => {
   }
 };
 
-const generateRoadmap = async (req, res) => {
-  try {
-    const userId = userIdOf(req);
-    if (!userId) return res.status(401).json({ success: false, message: "Please log in to generate a learning roadmap." });
-    const roleName = clean(req.body?.role);
-    const role = ROLE_CATALOG.find((item) => norm(item.title) === norm(roleName));
-    if (!role) return res.status(400).json({ success: false, message: "Choose a supported career role first." });
-    const user = await User.findById(userId).select("skills resumeSkills").lean();
-    if (!user) return res.status(404).json({ success: false, message: "User profile not found." });
-    const currentSkills = unique([...(user.skills || []), ...(user.resumeSkills || [])]);
-    const missing = role.skills.filter((skill) => !currentSkills.some((current) => norm(current) === norm(skill)));
-    if (!missing.length) return res.status(400).json({ success: false, message: "Your profile already contains all skills in this starter role catalogue. Update your target role or explore an advanced role." });
-
-    const previous = await CareerDevelopment.findOne({ userId }).lean();
-    const previousStatus = new Map((previous?.roadmap || []).map((item) => [norm(item.skill), item.status]));
-    const jobs = await Job.find({}).sort({ scrapedAt: -1 }).limit(300).select("skills detectedJobSkills title description requirements qualifications responsibilities").lean();
-    const roadmap = missing.map((skill, index) => {
-      const guide = LEARNING_GUIDES[skill] || {
-        weeks: 2,
-        topics: ["Understand the core concepts", "Practise the main tools and workflow", "Apply the skill in a small project"],
-        resource: ["Find official learning documentation", "https://www.google.com/search?q=" + encodeURIComponent(skill + " official documentation")],
-        task: "Build a small practical exercise that demonstrates " + skill + ".",
-      };
-      const demand = jobs.filter((job) => matchesSkill(skill, job)).length;
-      const demandRate = jobs.length ? demand / jobs.length : 0;
-      const priority = demandRate >= 0.05 ? "High" : demandRate >= 0.01 ? "Medium" : "Low";
-      return {
-        skill,
-        priority,
-        reason: demand
-          ? "This skill is part of the selected " + role.title + " role and appears in " + demand + " stored job listings."
-          : "This skill is included in the selected " + role.title + " role's curated skill requirements. Current stored listings provide limited demand evidence.",
-        estimatedWeeks: guide.weeks,
-        status: previousStatus.get(norm(skill)) || "Not Started",
-        topics: guide.topics,
-        resource: { title: guide.resource[0], url: guide.resource[1] },
-        practiceTask: guide.task,
-        order: index + 1,
-      };
-    }).sort((a, b) => ({High:0,Medium:1,Low:2}[a.priority] - {High:0,Medium:1,Low:2}[b.priority]) || a.order - b.order)
-      .map((item, index) => ({ ...item, order: index + 1 }));
-
-    const saved = await CareerDevelopment.findOneAndUpdate(
-      { userId },
-      { $set: { selectedRole: role.title, roadmap, roadmapUpdatedAt: new Date() } },
-      { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true }
-    ).lean();
-    return res.json({ success: true, roadmap: saved.roadmap, selectedRole: saved.selectedRole });
-  } catch (error) {
-    console.error("Generate learning roadmap:", error);
-    return res.status(500).json({ success: false, message: "Unable to generate the learning roadmap." });
-  }
-};
-
 const updateRoadmapStatus = async (req, res) => {
   try {
     const userId = userIdOf(req);
@@ -182,4 +127,4 @@ const updateRoadmapStatus = async (req, res) => {
   }
 };
 
-module.exports = { getOverview, savePreferences, generateRoadmap, updateRoadmapStatus };
+module.exports = { getOverview, savePreferences, updateRoadmapStatus };
