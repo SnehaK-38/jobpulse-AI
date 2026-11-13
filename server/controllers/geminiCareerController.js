@@ -82,7 +82,8 @@ const askGemini = async (prompt, purpose = 'content generation') => {
         }, { timeout: 60000 });
 
         geminiHealth.lastSuccessAt = new Date().toISOString();
-        geminiHealth.successesByFeature[featureForPurpose(purpose)] = geminiHealth.lastSuccessAt;\n        console.log("✅ Gemini API SUCCESS | purpose=" + purpose + " | model=" + model + " | HTTP " + response.status);
+        geminiHealth.successesByFeature[featureForPurpose(purpose)] = geminiHealth.lastSuccessAt;
+        console.log("✅ Gemini API SUCCESS | purpose=" + purpose + " | model=" + model + " | HTTP " + response.status);
 
         const output = response.data?.candidates?.[0]?.content?.parts?.map((part) => part.text || "").join("").trim();
         if (!output) throw new Error("Gemini returned an empty response. Please try again.");
