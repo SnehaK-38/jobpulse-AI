@@ -39,6 +39,34 @@ const resourceCatalog = [
     { title: "Java Programming", provider: "University of Helsinki", url: "https://java-programming.mooc.fi/", type: "Programming course with exercises" },
     { title: "Dev.java Learn", provider: "Oracle", url: "https://dev.java/learn/", type: "Guided tutorials" }
   ]},
+  { keys: ["scikit-learn", "sklearn"], resources: [
+    { title: "Machine Learning with scikit-learn", provider: "scikit-learn MOOC", url: "https://inria.github.io/scikit-learn-mooc/", type: "Practical course with exercises" },
+    { title: "Intro to Machine Learning", provider: "Kaggle Learn", url: "https://www.kaggle.com/learn/intro-to-machine-learning", type: "Hands-on micro-course" }
+  ]},
+  { keys: ["javascript"], resources: [
+    { title: "JavaScript Algorithms and Data Structures", provider: "freeCodeCamp", url: "https://www.freecodecamp.org/learn/javascript-algorithms-and-data-structures-v8/", type: "Interactive coding course" },
+    { title: "JavaScript Guide", provider: "MDN", url: "https://developer.mozilla.org/en-US/docs/Learn/JavaScript", type: "Guided practical lessons" }
+  ]},
+  { keys: ["mongodb"], resources: [
+    { title: "MongoDB Learning Paths", provider: "MongoDB University", url: "https://learn.mongodb.com/learning-paths", type: "Guided courses and labs" },
+    { title: "MongoDB University", provider: "MongoDB", url: "https://learn.mongodb.com/", type: "Free online courses" }
+  ]},
+  { keys: ["rest api", "api testing"], resources: [
+    { title: "Postman Academy", provider: "Postman", url: "https://academy.postman.com/", type: "API testing courses" },
+    { title: "Postman Student Expert", provider: "Postman", url: "https://www.postman.com/student-expert/", type: "Hands-on API exercises" }
+  ]},
+  { keys: ["html", "css", "html5", "css3"], resources: [
+    { title: "Frontend Developer Career Path", provider: "Scrimba", url: "https://scrimba.com/learn/frontend", type: "Interactive project-based course" },
+    { title: "Learn HTML and CSS", provider: "MDN", url: "https://developer.mozilla.org/en-US/docs/Learn", type: "Guided practical lessons" }
+  ]},
+  { keys: ["angular"], resources: [
+    { title: "Learn Angular", provider: "Angular", url: "https://angular.dev/tutorials/learn-angular", type: "Interactive tutorial" },
+    { title: "Angular Essentials", provider: "Angular", url: "https://angular.dev/essentials", type: "Guided hands-on lessons" }
+  ]},
+  { keys: ["vue", "vue.js"], resources: [
+    { title: "Vue Tutorial", provider: "Vue.js", url: "https://vuejs.org/tutorial/", type: "Interactive build-along tutorial" },
+    { title: "Vue School", provider: "Vue School", url: "https://vueschool.io/", type: "Video courses and exercises" }
+  ]},
   { keys: ["pandas"], resources: [
     { title: "Pandas", provider: "Kaggle Learn", url: "https://www.kaggle.com/learn/pandas", type: "Hands-on micro-course" },
     { title: "Pandas Getting Started", provider: "Pandas", url: "https://pandas.pydata.org/docs/getting_started/intro_tutorials/", type: "Practical data exercises" }
