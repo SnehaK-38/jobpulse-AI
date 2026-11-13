@@ -69,7 +69,7 @@ const getOverview = async (req, res) => {
       success: true,
       profile: { fullName: user.fullName, targetRole: user.targetRole || "", currentSkills, preferredIndustry: user.preferredIndustry || "", preferredLocation: user.preferredLocation || "" },
       interests,
-      selectedRole: saved?.selectedRole || user.targetRole || "",
+      selectedRole: saved?.selectedRole || "",
       roles: roleResults,
       roadmap: saved?.roadmap || [],
       roadmapUpdatedAt: saved?.roadmapUpdatedAt || null,
