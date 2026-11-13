@@ -4,9 +4,9 @@ const {
   listConversations, createConversation, getConversation, sendMessage, deleteConversation
 } = require("../controllers/careerAssistantController");
 
-const router = express.Router();
+const { getGeminiStatus } = require("../controllers/geminiCareerController");\n\nconst router = express.Router();
 router.use(authMiddleware);
-router.get("/conversations", listConversations);
+router.get("/gemini-status", getGeminiStatus);\nrouter.get("/conversations", listConversations);
 router.post("/conversations", createConversation);
 router.get("/conversations/:id", getConversation);
 router.post("/conversations/:id/chat", sendMessage);
