@@ -7,7 +7,8 @@ const messageSchema = new mongoose.Schema({
 }, { _id: true });
 
 const conversationSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, unique: true, index: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
+  title: { type: String, default: "New conversation", maxlength: 90 },
   messages: { type: [messageSchema], default: [] }
 }, { timestamps: true });
 
