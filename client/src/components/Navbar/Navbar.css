@@ -602,3 +602,36 @@ border-radius:10px;
   .nav-links .saved-jobs-nav-link,
   .nav-links .skill-gap-nav-link { padding: 8px 9px; font-size: 11px; }
 }
+
+
+/* Theme switch */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 8px 12px;
+  border: 1px solid rgba(148, 163, 184, .35);
+  border-radius: 999px;
+  background: rgba(255,255,255,.09);
+  color: #f8fafc;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background .2s ease, border-color .2s ease, transform .2s ease;
+}
+.theme-toggle:hover {
+  background: rgba(255,255,255,.17);
+  border-color: rgba(125,211,252,.7);
+  transform: translateY(-1px);
+}
+.theme-toggle:focus-visible {
+  outline: 2px solid #67e8f9;
+  outline-offset: 3px;
+}
+@media (max-width: 768px) {
+  .theme-toggle span { display: none; }
+  .theme-toggle { width: 38px; padding: 8px; }
+}
