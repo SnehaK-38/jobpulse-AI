@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import Navbar from "../../components/Navbar/Navbar";
 import {
-  createLearningRoadmap, getCareerDevelopment, saveCareerPreferences, updateLearningStatus
+  createGeminiLearningRoadmap, generateGeminiCareerRecommendations, getCareerDevelopment, getGeminiInterestOptions, saveCareerPreferences, updateLearningStatus
 } from "../../services/careerDevelopmentService";
 import "./CareerDevelopment.css";
 
@@ -29,7 +29,7 @@ const STATUS = ["Not Started", "In Progress", "Completed"];
 
 function CareerDevelopment() {
   const [data, setData] = useState(null);
-  const [selectedInterests, setSelectedInterests] = useState([]);
+  const [selectedInterests, setSelectedInterests] = useState([]);\n  const [interestOptions, setInterestOptions] = useState([]);\n  const [generatingRoles, setGeneratingRoles] = useState(false);
   const [selectedRole, setSelectedRole] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -96,7 +96,7 @@ function CareerDevelopment() {
     if (!roleName) { setError("Select a career role before generating a roadmap."); return; }
     try {
       setGenerating(true); setError(""); setMessage("");
-      const result = await createLearningRoadmap(roleName);
+      const result = await createGeminiLearningRoadmap(roleName);
       setData((current) => ({ ...current, roadmap: result.roadmap, selectedRole: result.selectedRole }));
       setSelectedRole(result.selectedRole);
       setMessage("Your learning roadmap has been created and saved to your account.");
@@ -115,7 +115,7 @@ function CareerDevelopment() {
     } finally { setUpdatingId(""); }
   };
 
-  if (loading) return <><Navbar dashboardMode /><main className="career-dev-page"><div className="career-dev-loading"><LoaderCircle className="career-dev-spin" /> Loading your career workspace...</div></main></>;
+  if (loading) return <><Navbar dashboardMode /><main className="career-dev-page"><div className="career-dev-loading"><LoaderCircle className="career-dev-spin" /> Loading your career workspace and Gemini interest options...</div></main></>;
 
   return (
     <>
@@ -141,7 +141,7 @@ function CareerDevelopment() {
         <section className="career-dev-panel">
           <div className="career-dev-section-title"><div><span>STEP 1</span><h2>Choose your career interests</h2><p>Select areas that genuinely interest you. Recommendations consider both your skills and your interests.</p></div><Target /></div>
           <div className="career-dev-interest-grid">
-            {INTERESTS.map((interest) => (
+            {interestOptions.map((interest) => (
               <label className={selectedInterests.includes(interest) ? "career-interest active" : "career-interest"} key={interest}>
                 <input type="checkbox" checked={selectedInterests.includes(interest)} onChange={() => toggleInterest(interest)} />
                 <span>{interest}</span>
@@ -149,9 +149,9 @@ function CareerDevelopment() {
             ))}
           </div>
           <div className="career-dev-panel-actions">
-            <small>Choose up to 12 interests. Recommendations update after you save. You can change them anytime.</small>
+            <small>Choose up to 12 interests. Gemini generates relevant career paths after you save. You can change them anytime.</small>
             <button onClick={handleSavePreferences} disabled={saving || selectedInterests.length > 12}>
-              {saving ? <LoaderCircle className="career-dev-spin" size={16} /> : <Save size={16} />} Save interests
+              {saving || generatingRoles ? <LoaderCircle className="career-dev-spin" size={16} /> : <Save size={16} />} {generatingRoles ? "Generating career paths with Gemini..." : saving ? "Saving..." : "Save interests & generate paths"}
             </button>
           </div>
         </section>
@@ -220,7 +220,7 @@ function CareerDevelopment() {
         )}
 
         <section className="career-dev-panel">
-          <div className="career-dev-section-title"><div><span>STEP 3</span><h2>Your learning roadmap</h2><p>A practical sequence of topics, official learning resources and exercises. Progress is saved to your account.</p></div><BookOpen /></div>
+          <div className="career-dev-section-title"><div><span>STEP 3</span><h2>Your learning roadmap</h2><p>Gemini creates a personalised sequence of topics, learning resources and practical exercises. Progress is saved to your account.</p></div><BookOpen /></div>
           {roadmap.length ? (
             <>
               <div className="career-dev-progress"><div><strong>{progress}% completed</strong><span>{completed} / {roadmap.length} skills</span></div><div className="career-dev-progress-track"><span style={{ width: progress + "%" }} /></div></div>
@@ -244,7 +244,7 @@ function CareerDevelopment() {
           ) : <div className="career-dev-empty"><BookOpen size={28} /><strong>No learning roadmap yet</strong><p>Choose a career role above and generate a learning plan based on the skills you still need to develop.</p></div>}
         </section>
 
-        <p className="career-dev-disclaimer">{data?.catalogueNote} Career match scores are rule-based indicators (skills 60%, interests 25%, demand 15% when available), not predictions of hiring success. Demand uses up to 300 recently stored listings. Learning durations are estimates.</p>
+        <p className="career-dev-disclaimer">Career paths and learning roadmaps are generated by Gemini using your profile and selected interests. Skill match and job-demand signals are calculated from your profile and stored JobPulse listings; they are not predictions of hiring success.</p>
       </main>
     </>
   );
