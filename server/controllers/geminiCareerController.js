@@ -80,7 +80,8 @@ const askGemini = async (prompt, purpose = 'content generation') => {
           generationConfig: { responseMimeType: "application/json", temperature: 0.35, maxOutputTokens: 7000 }
         }, { timeout: 60000 });
 
-        geminiHealth.lastSuccessAt = new Date().toISOString();\n        geminiHealth.successesByFeature[featureForPurpose(purpose)] = geminiHealth.lastSuccessAt;\n        console.log("✅ Gemini API SUCCESS | purpose=" + purpose + " | model=" + model + " | HTTP " + response.status);
+        geminiHealth.lastSuccessAt = new Date().toISOString();
+        geminiHealth.successesByFeature[featureForPurpose(purpose)] = geminiHealth.lastSuccessAt;\n        console.log("✅ Gemini API SUCCESS | purpose=" + purpose + " | model=" + model + " | HTTP " + response.status);
 
         const output = response.data?.candidates?.[0]?.content?.parts?.map((part) => part.text || "").join("").trim();
         if (!output) throw new Error("Gemini returned an empty response. Please try again.");
@@ -107,7 +108,8 @@ const askGemini = async (prompt, purpose = 'content generation') => {
     console.warn("Gemini primary/fallback model attempt ended for " + model + ".");
   }
 
-  recordGeminiFailure(purpose, lastError || new Error("Unknown Gemini error"));\n  const finalError = new Error(getGeminiErrorMessage(lastError || new Error("Unknown Gemini error")));
+  recordGeminiFailure(purpose, lastError || new Error("Unknown Gemini error"));
+  const finalError = new Error(getGeminiErrorMessage(lastError || new Error("Unknown Gemini error")));
   finalError.status = lastError?.response?.status || lastError?.status || 503;
   finalError.cause = lastError;
   throw finalError;
