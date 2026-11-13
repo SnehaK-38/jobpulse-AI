@@ -87,8 +87,9 @@ const savePreferences = async (req, res) => {
   try {
     const userId = userIdOf(req);
     if (!userId) return res.status(401).json({ success: false, message: "Please log in to save your career interests." });
-    const allowed = new Set(["Web Development", "Software Development", "Backend Systems", "UI Development", "Data Analytics", "Business Intelligence", "Artificial Intelligence", "Machine Learning", "Data Science", "Software Testing", "Quality Engineering", "Cloud Computing", "Automation", "Cybersecurity", "Networking", "Product Design", "Infrastructure", "Mobile App Development", "Android Development", "iOS Development", "Data Engineering", "Big Data", "Business Analysis", "AWS", "Microsoft Azure", "Site Reliability Engineering", "Platform Engineering", "Automation Testing", "Manual Testing", "Performance Testing", "Application Security", "Network Security", "Database Management", "Product Management", "Product Strategy", "Generative AI", "Deep Learning", "Natural Language Processing", "Computer Vision", "MLOps", "Blockchain", "Game Development", "3D Graphics", "Technical Support", "IT Operations", "Technical Writing", "Documentation", "Frontend Development", "Interaction Design", "Research", "Application Engineering"]);
-    const interests = unique(Array.isArray(req.body?.interests) ? req.body.interests : []).filter((item) => allowed.has(item)).slice(0, 12);
+    const interests = unique(Array.isArray(req.body?.interests) ? req.body.interests : [])
+      .filter((item) => item.length <= 80)
+      .slice(0, 12);
     const selectedRole = clean(req.body?.selectedRole).slice(0, 100);
     const existing = await CareerDevelopment.findOne({ userId }).select("generatedRoles").lean();
     const validRoles = existing?.generatedRoles?.length ? existing.generatedRoles : ROLE_CATALOG;
