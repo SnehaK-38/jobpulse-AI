@@ -6,6 +6,7 @@ const authMiddleware =
 const {
   searchJobs,
   getStoredJobs,
+  refreshJobs,
 } = require("../controllers/jobController");
 
 
@@ -20,6 +21,12 @@ router.get(
   "/search",
   authMiddleware,
   searchJobs
+);
+
+router.post(
+  "/refresh",
+  authMiddleware,
+  refreshJobs
 );
 
 

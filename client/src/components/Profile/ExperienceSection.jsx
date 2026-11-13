@@ -8,6 +8,7 @@ import "./ExperienceSection.css";
 
 function ExperienceSection({
   experience,
+  yearsOfExperience,
   setProfile,
 }) {
 
@@ -52,6 +53,13 @@ function ExperienceSection({
     }));
   };
 
+  const handleYearsChange = (event) => {
+    setProfile((prev) => ({
+      ...prev,
+      yearsOfExperience: event.target.value,
+    }));
+  };
+
 
   return (
     <div className="experience-section">
@@ -83,6 +91,25 @@ function ExperienceSection({
 
       </div>
 
+      <div className="experience-years">
+        <label htmlFor="years-of-experience">
+          Years of professional experience
+        </label>
+        <input
+          id="years-of-experience"
+          type="number"
+          min="0"
+          max="80"
+          step="0.5"
+          value={yearsOfExperience ?? ""}
+          onChange={handleYearsChange}
+        />
+        <p>
+          Enter your total work experience. This is used to filter jobs whose
+          stated experience range does not fit your profile; leave it blank if
+          you are unsure.
+        </p>
+      </div>
 
       <div className="experience-list">
 

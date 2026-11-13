@@ -4,7 +4,7 @@ import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
 
 window.addEventListener("load", () => {
-  const remember = localStorage.getItem("rememberMe");
+  const remember = localStorage.getItem("rememberMe") === "true";
 
   if (!remember) {
     localStorage.removeItem("token");

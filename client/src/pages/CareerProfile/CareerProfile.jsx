@@ -105,6 +105,7 @@ function CareerProfile() {
     education: [],
     projects: [],
     experience: [],
+    yearsOfExperience: "",
     certifications: [],
 
     achievements: [],
@@ -1121,6 +1122,9 @@ function CareerProfile() {
           <ExperienceSection
             experience={
               profile.experience || []
+            }
+            yearsOfExperience={
+              profile.yearsOfExperience
             }
             setProfile={
               setProfile
