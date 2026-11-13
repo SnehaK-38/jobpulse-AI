@@ -179,7 +179,8 @@ function CareerAssistant() {
   return (
     <>
       <Navbar dashboardMode />
-      <main className="career-assistant-page">\n        <div className="assistant-status-wrap"><GeminiStatus compact /></div>
+      <main className="career-assistant-page">
+        <div className="assistant-status-wrap"><GeminiStatus compact /></div>
         <div className="assistant-shell">
           <aside className="assistant-sidebar">
             <div className="assistant-brand"><span className="assistant-brand-icon"><Sparkles size={19} /></span><div><strong>Career Assistant</strong><small>YOUR PERSONAL CAREER GUIDE</small></div></div>
