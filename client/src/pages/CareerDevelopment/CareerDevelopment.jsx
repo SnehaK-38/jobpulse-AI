@@ -5,7 +5,6 @@ import {
   Target, TrendingUp
 } from "lucide-react";
 import Navbar from "../../components/Navbar/Navbar";
-import GeminiStatus from "../../components/GeminiStatus/GeminiStatus";
 import {
   createGeminiLearningRoadmap, generateGeminiCareerRecommendations, getCareerDevelopment, getGeminiInterestOptions, saveCareerPreferences, updateLearningStatus
 } from "../../services/careerDevelopmentService";
@@ -109,13 +108,12 @@ function CareerDevelopment() {
   };
 
   if (loading) return <><Navbar dashboardMode /><main className="career-dev-page">
-        <GeminiStatus compact /><div className="career-dev-loading"><LoaderCircle className="career-dev-spin" /> Loading your career workspace and Gemini interest options...</div></main></>;
+        <div className="career-dev-loading"><LoaderCircle className="career-dev-spin" /> Loading your career workspace and Gemini interest options...</div></main></>;
 
   return (
     <>
       <Navbar dashboardMode />
       <main className="career-dev-page">
-        <GeminiStatus compact />
         <section className="career-dev-hero">
           <div>
             <span className="career-dev-eyebrow"><Compass size={15} /> CAREER TRAJECTORY INTELLIGENCE</span>
