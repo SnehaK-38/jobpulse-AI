@@ -29,6 +29,8 @@ const missingSkillRoadmapItemSchema = new mongoose.Schema({
   }],
   practiceTask: { type: String, default: "" },
   prerequisites: { type: [String], default: [] },
+  project: { type: mongoose.Schema.Types.Mixed, default: null },
+  assessment: { type: mongoose.Schema.Types.Mixed, default: null },
   order: { type: Number, default: 0 },
 }, { _id: true });
 
@@ -43,6 +45,8 @@ const careerDevelopmentSchema = new mongoose.Schema({
   missingSkillsRoadmap: { type: [missingSkillRoadmapItemSchema], default: [] },
   missingSkillsRoadmapRole: { type: String, default: "" },
   missingSkillsRoadmapUpdatedAt: { type: Date, default: null },
+  missingSkillsWeeklyPlan: { type: mongoose.Schema.Types.Mixed, default: null },
+  missingSkillsWeeklyPlanRole: { type: String, default: "" },
 }, { timestamps: true });
 
 module.exports = mongoose.model("CareerDevelopment", careerDevelopmentSchema);
