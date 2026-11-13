@@ -16,7 +16,6 @@ import {
   ChevronRight,
 } from "lucide-react";
 import Navbar from "../../components/Navbar/Navbar";
-import JobComparison from "./JobComparison";
 import { getSkillGapOverview } from "../../services/skillGapService";
 import "./SkillGapAnalysis.css";
 
@@ -25,7 +24,6 @@ function SkillGapAnalysis() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [priorityPage, setPriorityPage] = useState(0);
-  const [activeView, setActiveView] = useState("overview");
 
   const loadAnalysis = useCallback(async () => {
     try {
@@ -69,38 +67,23 @@ function SkillGapAnalysis() {
         <section className="skill-gap-heading">
           <div>
             <span className="skill-gap-eyebrow"><Sparkles size={14} /> CAREER INTELLIGENCE</span>
-            <h1>{activeView === "overview" ? "Skill Gap Analysis" : "Job Comparison & Shortlisting"}</h1>
-            <p>{activeView === "overview"
-              ? "See how your saved skills compare with the skills appearing in jobs related to your target role."
-              : "Compare real job opportunities against your profile and save the ones you want to revisit."}</p>
+            <h1>Skill Gap Analysis</h1>
+            <p>See how your skills compare with the requirements appearing in jobs related to your target role.</p>
           </div>
-          {activeView === "overview" && (
-            <button className="skill-gap-refresh" onClick={loadAnalysis} disabled={loading}>
-              <RefreshCw size={16} className={loading ? "is-spinning" : ""} />
-              {loading ? "Analysing..." : "Refresh analysis"}
-            </button>
-          )}
+          <button className="skill-gap-refresh" onClick={loadAnalysis} disabled={loading}>
+            <RefreshCw size={16} className={loading ? "is-spinning" : ""} />
+            {loading ? "Analysing..." : "Refresh analysis"}
+          </button>
         </section>
 
-        <nav className="skill-gap-view-tabs" aria-label="Career intelligence views">
-          <button type="button" className={activeView === "overview" ? "active" : ""} onClick={() => setActiveView("overview")} aria-current={activeView === "overview" ? "page" : undefined}>
-            <Layers3 size={15} /> Skill Gap Overview
-          </button>
-          <button type="button" className={activeView === "comparison" ? "active" : ""} onClick={() => setActiveView("comparison")} aria-current={activeView === "comparison" ? "page" : undefined}>
-            <BriefcaseBusiness size={15} /> Compare & Shortlist
-          </button>
-        </nav>
-
-        {error && activeView === "overview" && (
+        {error && (
           <div className="skill-gap-alert" role="alert">
             <AlertCircle size={18} />
             <span>{error}</span>
           </div>
         )}
 
-        {activeView === "comparison" ? (
-          <JobComparison analysis={data} />
-        ) : loading && !data ? (
+        {loading && !data ? (
           <div className="skill-gap-loading"><span className="skill-gap-loader" /> Building your skill gap overview...</div>
         ) : (
           <>

@@ -1409,3 +1409,36 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+
+.save-job-button {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  min-height:36px;
+  padding:0 12px;
+  border:1px solid #d9d5ff;
+  border-radius:8px;
+  background:#f5f3ff;
+  color:#5b4ac9;
+  font-family:inherit;
+  font-size:12px;
+  font-weight:700;
+  cursor:pointer;
+  transition:background .15s ease,border-color .15s ease,transform .15s ease;
+}
+.save-job-button:hover:not(:disabled) {
+  border-color:#bdb4ff;
+  background:#ede9fe;
+  transform:translateY(-1px);
+}
+.save-job-button.saved {
+  border-color:#ccebdd;
+  background:#effaf5;
+  color:#16805d;
+}
+.save-job-button:disabled {
+  opacity:.6;
+  cursor:not-allowed;
+}
