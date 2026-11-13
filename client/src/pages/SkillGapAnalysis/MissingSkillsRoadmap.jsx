@@ -11,6 +11,7 @@ import {
   generateMissingSkillAssessment, submitMissingSkillAssessment
 } from "../../services/skillGapService";
 import "./MissingSkillsRoadmap.css";
+import GeminiStatus from "../../components/GeminiStatus/GeminiStatus";
 
 const VIEWS = [
   { id: "overview", label: "Roadmap", icon: Target },
@@ -178,7 +179,7 @@ function MissingSkillsRoadmap({ profile, missingSkills = [], jobIds = [] }) {
   if (loadingSaved) return <div className="learning-loading"><LoaderCircle className="learning-spin" size={22} /> Loading your learning workspace...</div>;
 
   if (!hasCurrentGaps) return (
-    <section className="learning-workspace">
+    <section className="learning-workspace">\n      <GeminiStatus compact />
       <div className="learning-empty">
         <span className="learning-empty-icon"><GraduationCap size={30} /></span>
         <h2>{missingSkills.length ? "Refresh your job analysis" : "Your learning workspace is waiting"}</h2>
