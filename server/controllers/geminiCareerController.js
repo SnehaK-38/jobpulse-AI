@@ -174,4 +174,4 @@ const generateGeminiRoadmap = async (req, res) => {
   }
 };
 
-module.exports = { getInterestOptions, generateCareerRecommendations, generateGeminiRoadmap };
+module.exports = { getInterestOptions, generateCareerRecommendations, generateGeminiRoadmap, askGemini };
