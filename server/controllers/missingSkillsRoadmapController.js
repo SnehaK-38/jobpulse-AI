@@ -30,7 +30,7 @@ const getMissingSkillsRoadmap = async (req, res) => {
     const userId = userIdOf(req);
     if (!userId) return res.status(401).json({ success: false, message: "Please log in to view your learning roadmap." });
     const saved = await CareerDevelopment.findOne({ userId })
-      .select("missingSkillsRoadmap missingSkillsRoadmapRole missingSkillsRoadmapUpdatedAt")
+      .select("missingSkillsRoadmap missingSkillsRoadmapRole missingSkillsRoadmapUpdatedAt missingSkillsWeeklyPlan")
       .lean();
     const roadmap = (saved?.missingSkillsRoadmap || []).map((item) => {
       const copy = { ...item };
