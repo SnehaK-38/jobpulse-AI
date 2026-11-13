@@ -140,3 +140,58 @@ code {
 :root[data-theme="dark"] :is(.dropdown-link, .user-info h4, .user-info p) {
   color: #e2e8f0;
 }
+
+
+/* Stronger app-wide dark theme overrides for pages with component-level CSS. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --text: #d1d5db;
+  --text-h: #f8fafc;
+  --bg: #0b1220;
+  --border: #334155;
+}
+:root[data-theme="dark"] body,
+:root[data-theme="dark"] #root {
+  background: #0b1220 !important;
+  color: #d1d5db !important;
+}
+:root[data-theme="dark"] :is(main, .page, [class*="page-container"], [class*="page-wrapper"], [class*="content-wrapper"]) {
+  background-color: #0b1220;
+  color: #d1d5db;
+}
+:root[data-theme="dark"] :is(
+  [class*="card"], [class*="panel"], [class*="container"], [class*="section"],
+  [class*="modal"], [class*="dropdown"], [class*="table-wrapper"],
+  [class*="stat"], [class*="roadmap"], [class*="job-item"], [class*="saved-job"]
+) {
+  border-color: #334155;
+}
+:root[data-theme="dark"] :is(
+  [class*="card"], [class*="panel"], [class*="modal"], [class*="dropdown"],
+  [class*="stat-card"], [class*="job-card"], [class*="saved-job-card"],
+  [class*="skill-card"], [class*="roadmap-card"], [class*="project-card"],
+  [class*="planner-card"], [class*="chat-container"], [class*="assistant-panel"]
+) {
+  background-color: #111c2e;
+  color: #e2e8f0;
+}
+:root[data-theme="dark"] :is(h1, h2, h3, h4, h5, h6, p, label, li, td, th, small, strong, span) {
+  color: inherit;
+}
+:root[data-theme="dark"] :is(input, textarea, select) {
+  background: #111c2e !important;
+  color: #f1f5f9 !important;
+  border-color: #475569 !important;
+}
+:root[data-theme="dark"] :is(input, textarea, select)::placeholder {
+  color: #94a3b8 !important;
+}
+:root[data-theme="dark"] :is(table, th, td) {
+  border-color: #334155;
+}
+:root[data-theme="dark"] a:not(.logo):not([class*="nav-link"]) {
+  color: #93c5fd;
+}
+:root[data-theme="dark"] :is(button:not(.theme-toggle)) {
+  color: inherit;
+}
