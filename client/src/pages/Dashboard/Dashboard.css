@@ -1510,3 +1510,93 @@
   opacity:.6;
   cursor:not-allowed;
 }
+
+
+/* =========================================================
+   DASHBOARD DARK THEME
+   The dashboard uses fixed light colors, so explicitly
+   override its own page, search, status, and job-card styles.
+========================================================= */
+:root[data-theme="dark"] .job-dashboard {
+  background:
+    radial-gradient(ellipse at 88% 2%, rgba(99, 102, 241, .12), transparent 32rem),
+    #0b1220 !important;
+  color: #e2e8f0 !important;
+}
+:root[data-theme="dark"] .job-dashboard :is(h1, h2, h3, h4, h5, h6) {
+  color: #f8fafc;
+}
+:root[data-theme="dark"] .job-dashboard :is(p, label, small, .skill-data-note, .job-description) {
+  color: #cbd5e1;
+}
+:root[data-theme="dark"] .job-dashboard :is(
+  .job-search, .search-status, .source-summary, .provider-summary,
+  .job-card, .job-listing, .jobs-grid, .results-header, .pagination,
+  .empty-state, .error-message
+) {
+  background-color: #111c2e !important;
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, .2);
+}
+:root[data-theme="dark"] .job-dashboard .search-field {
+  background: #0b1628 !important;
+  border-color: #334155 !important;
+  color: #cbd5e1 !important;
+}
+:root[data-theme="dark"] .job-dashboard .search-field:focus-within {
+  background: #111c2e !important;
+  border-color: #818cf8 !important;
+}
+:root[data-theme="dark"] .job-dashboard .search-field input {
+  background: transparent !important;
+  color: #f8fafc !important;
+}
+:root[data-theme="dark"] .job-dashboard .search-field input::placeholder {
+  color: #94a3b8 !important;
+}
+:root[data-theme="dark"] .job-dashboard :is(
+  .job-card, .job-listing, .job-result-card, .job-item,
+  .job-card-body, .job-card-content, .job-details, .job-meta,
+  .description-section
+) {
+  background-color: #111c2e;
+  border-color: #334155 !important;
+  color: #e2e8f0;
+}
+:root[data-theme="dark"] .job-dashboard :is(
+  .job-title, .company-name, .job-location, .job-type,
+  .job-description strong, .description-section h4
+) {
+  color: #f1f5f9 !important;
+}
+:root[data-theme="dark"] .job-dashboard :is(
+  .missing-skill, .skills span, .reason-list span
+) {
+  border-color: #475569;
+}
+:root[data-theme="dark"] .job-dashboard .missing-skill {
+  background: #1e293b !important;
+  color: #cbd5e1 !important;
+}
+:root[data-theme="dark"] .job-dashboard .matched-skill {
+  background: rgba(22, 163, 74, .16) !important;
+  color: #86efac !important;
+}
+:root[data-theme="dark"] .job-dashboard .details-button,
+:root[data-theme="dark"] .job-dashboard .secondary-button {
+  background: #1e293b !important;
+  border-color: #475569 !important;
+  color: #e2e8f0 !important;
+}
+:root[data-theme="dark"] .job-dashboard .details-button:hover,
+:root[data-theme="dark"] .job-dashboard .secondary-button:hover {
+  background: #334155 !important;
+  color: #fff !important;
+}
+:root[data-theme="dark"] .job-dashboard :is(.job-card-footer, .description-section) {
+  border-color: #334155 !important;
+}
+:root[data-theme="dark"] .job-dashboard :is(.search-status, .skill-data-note) {
+  color: #cbd5e1 !important;
+}
