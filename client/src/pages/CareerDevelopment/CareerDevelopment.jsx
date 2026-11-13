@@ -14,7 +14,15 @@ const INTERESTS = [
   "Web Development", "Software Development", "Backend Systems", "UI Development",
   "Data Analytics", "Business Intelligence", "Artificial Intelligence", "Machine Learning",
   "Data Science", "Software Testing", "Quality Engineering", "Cloud Computing",
-  "Automation", "Cybersecurity", "Networking", "Product Design", "Infrastructure"
+  "Automation", "Cybersecurity", "Networking", "Product Design", "Infrastructure",
+  "Mobile App Development", "Android Development", "iOS Development", "Data Engineering",
+  "Big Data", "Business Analysis", "AWS", "Microsoft Azure", "Site Reliability Engineering",
+  "Platform Engineering", "Automation Testing", "Manual Testing", "Performance Testing",
+  "Application Security", "Network Security", "Database Management", "Product Management",
+  "Product Strategy", "Generative AI", "Deep Learning", "Natural Language Processing",
+  "Computer Vision", "MLOps", "Blockchain", "Game Development", "3D Graphics",
+  "Technical Support", "IT Operations", "Technical Writing", "Documentation",
+  "Frontend Development", "Interaction Design", "Research", "Application Engineering"
 ];
 
 const STATUS = ["Not Started", "In Progress", "Completed"];
@@ -53,7 +61,7 @@ function CareerDevelopment() {
   const completed = roadmap.filter((item) => item.status === "Completed").length;
   const progress = roadmap.length ? Math.round(completed / roadmap.length * 100) : 0;
   const selectedRoleData = roles.find((role) => role.title === selectedRole);
-  const recommendedRoles = useMemo(() => roles.slice(0, 6), [roles]);
+  const recommendedRoles = useMemo(() => roles, [roles]);
 
   const toggleInterest = (interest) => {
     setSelectedInterests((current) => current.includes(interest)
@@ -117,7 +125,7 @@ function CareerDevelopment() {
 
         <section className="career-dev-profile-strip">
           <div><span>YOUR CURRENT SKILLS</span><strong>{profileSkills.length}</strong><small>{data?.profile?.targetRole || "No target role saved in profile"}</small></div>
-          <div><span>JOB LISTINGS ANALYSED</span><strong>{data?.marketData?.listingsAnalysed || 0}</strong><small>Stored JobPulse listings</small></div>
+          <div><span>JOBPULSE LISTINGS AVAILABLE</span><strong>{data?.marketData?.totalStoredListings ?? 0}</strong><small>{data?.marketData?.listingsSampled ?? 0} recent listings sampled for demand signals (up to 300)</small></div>
           <div><span>LEARNING PROGRESS</span><strong>{progress}%</strong><small>{completed} of {roadmap.length} roadmap skills completed</small></div>
         </section>
 
@@ -132,27 +140,32 @@ function CareerDevelopment() {
             ))}
           </div>
           <div className="career-dev-panel-actions">
-            <small>Choose up to 10 interests. You can change them anytime.</small>
-            <button onClick={handleSavePreferences} disabled={saving || selectedInterests.length > 10}>
+            <small>Choose up to 12 interests. Recommendations update after you save. You can change them anytime.</small>
+            <button onClick={handleSavePreferences} disabled={saving || selectedInterests.length > 12}>
               {saving ? <LoaderCircle className="career-dev-spin" size={16} /> : <Save size={16} />} Save interests
             </button>
           </div>
         </section>
 
         <section className="career-dev-panel">
-          <div className="career-dev-section-title"><div><span>STEP 2</span><h2>Career paths recommended for you</h2><p>Recommendations combine profile-skill overlap, selected interests and demand signals from your stored job listings.</p></div><BriefcaseBusiness /></div>
+          <div className="career-dev-section-title"><div><span>STEP 2</span><h2>Career paths recommended for you</h2><p>All available career paths are ranked using your skill match, selected interests and signals from a recent sample of JobPulse listings.</p></div><BriefcaseBusiness /></div>
           {!profileSkills.length && <div className="career-dev-info">Your profile has no saved skills yet. Add or extract skills in My Profile to make skill-fit recommendations more useful. You can still explore roles using your interests.</div>}
           <div className="career-dev-role-grid">
             {recommendedRoles.map((role) => (
               <article className={selectedRole === role.title ? "career-role-card selected" : "career-role-card"} key={role.title}>
-                <div className="career-role-top"><span>{role.industry}</span><strong>{role.recommendationScore}% fit</strong></div>
+                <div className="career-role-top"><span>{role.industry}</span><strong>{role.recommendationScore}% match</strong></div>
                 <h3>{role.title}</h3>
                 <p>{role.interests.join(" · ")}</p>
                 <div className="career-role-metrics">
                   <span><CheckCircle2 size={14} /> {role.matchedSkills.length} matched</span>
                   <span><Target size={14} /> {role.missingSkills.length} to develop</span>
                 </div>
-                <div className="career-role-demand"><TrendingUp size={14} /> {role.demandCount} related listing signals in stored jobs</div>
+                <div className="career-role-demand"><TrendingUp size={14} /> Found in {role.demandCount} sampled listings</div>
+                <div className="career-role-score-breakdown">
+                  <span>Skills <b>{role.skillFit}%</b></span>
+                  <span>Interests <b>{role.interestFit}%</b></span>
+                  <span>Demand <b>{role.demandFit}%</b></span>
+                </div>
                 <div className="career-role-skills"><strong>Skills to develop</strong><div>{role.missingSkills.slice(0, 5).map((skill) => <span key={skill}>{skill}</span>)}</div></div>
                 <button className="career-role-select" onClick={() => { setSelectedRole(role.title); setMessage(""); }}>
                   {selectedRole === role.title ? "Selected career path" : "Explore this career"} <ArrowRight size={15} />
@@ -210,7 +223,7 @@ function CareerDevelopment() {
           ) : <div className="career-dev-empty"><BookOpen size={28} /><strong>No learning roadmap yet</strong><p>Choose a career role above and generate a learning plan based on the skills you still need to develop.</p></div>}
         </section>
 
-        <p className="career-dev-disclaimer">{data?.catalogueNote} Career-fit percentages are transparent rule-based indicators, not predictions of hiring success. Learning durations are estimates.</p>
+        <p className="career-dev-disclaimer">{data?.catalogueNote} Career match scores are rule-based indicators (skills 60%, interests 25%, demand 15% when available), not predictions of hiring success. Demand uses up to 300 recently stored listings. Learning durations are estimates.</p>
       </main>
     </>
   );
