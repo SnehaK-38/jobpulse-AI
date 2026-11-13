@@ -25,7 +25,10 @@ function MissingSkillsRoadmap({ profile, missingSkills = [], jobIds = [] }) {
   const inProgressCount = roadmap.filter((item) => item.status === "In Progress").length;
   const progress = roadmap.length ? Math.round(completedCount / roadmap.length * 100) : 0;
   const hasCurrentGaps = missingSkills.length > 0 && jobIds.length > 0;
-  const currentGapNames = missingSkills.map((item) => (typeof item === "string" ? item : item.name).toLowerCase()).sort();\n  const savedGapNames = roadmap.map((item) => item.skill.toLowerCase()).sort();\n  const sameSkillSet = currentGapNames.length === savedGapNames.length && currentGapNames.every((name, index) => name === savedGapNames[index]);\n  const roadmapIsCurrent = savedRole && savedRole.toLowerCase() === targetRole.toLowerCase() && sameSkillSet;
+  const currentGapNames = missingSkills.map((item) => (typeof item === "string" ? item : item.name).toLowerCase()).sort();
+  const savedGapNames = roadmap.map((item) => item.skill.toLowerCase()).sort();
+  const sameSkillSet = currentGapNames.length === savedGapNames.length && currentGapNames.every((name, index) => name === savedGapNames[index]);
+  const roadmapIsCurrent = savedRole && savedRole.toLowerCase() === targetRole.toLowerCase() && sameSkillSet;
 
   useEffect(() => {
     let active = true;
