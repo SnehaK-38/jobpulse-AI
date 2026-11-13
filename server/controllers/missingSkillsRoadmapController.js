@@ -51,7 +51,8 @@ const getMissingSkillsRoadmap = async (req, res) => {
       success: true,
       targetRole: saved?.missingSkillsRoadmapRole || "",
       roadmap,
-      updatedAt: saved?.missingSkillsRoadmapUpdatedAt || null,\n      weeklyPlan: saved?.missingSkillsWeeklyPlan || [],
+      updatedAt: saved?.missingSkillsRoadmapUpdatedAt || null,
+      weeklyPlan: saved?.missingSkillsWeeklyPlan || [],
     });
   } catch (error) {
     console.error("Get Missing Skills Roadmap:", error);
