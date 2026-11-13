@@ -10,26 +10,13 @@ import {
 } from "../../services/careerDevelopmentService";
 import "./CareerDevelopment.css";
 
-const INTERESTS = [
-  "Web Development", "Software Development", "Backend Systems", "UI Development",
-  "Data Analytics", "Business Intelligence", "Artificial Intelligence", "Machine Learning",
-  "Data Science", "Software Testing", "Quality Engineering", "Cloud Computing",
-  "Automation", "Cybersecurity", "Networking", "Product Design", "Infrastructure",
-  "Mobile App Development", "Android Development", "iOS Development", "Data Engineering",
-  "Big Data", "Business Analysis", "AWS", "Microsoft Azure", "Site Reliability Engineering",
-  "Platform Engineering", "Automation Testing", "Manual Testing", "Performance Testing",
-  "Application Security", "Network Security", "Database Management", "Product Management",
-  "Product Strategy", "Generative AI", "Deep Learning", "Natural Language Processing",
-  "Computer Vision", "MLOps", "Blockchain", "Game Development", "3D Graphics",
-  "Technical Support", "IT Operations", "Technical Writing", "Documentation",
-  "Frontend Development", "Interaction Design", "Research", "Application Engineering"
-];
-
 const STATUS = ["Not Started", "In Progress", "Completed"];
 
 function CareerDevelopment() {
   const [data, setData] = useState(null);
-  const [selectedInterests, setSelectedInterests] = useState([]);\n  const [interestOptions, setInterestOptions] = useState([]);\n  const [generatingRoles, setGeneratingRoles] = useState(false);
+  const [selectedInterests, setSelectedInterests] = useState([]);
+  const [interestOptions, setInterestOptions] = useState([]);
+  const [generatingRoles, setGeneratingRoles] = useState(false);
   const [selectedRole, setSelectedRole] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -43,8 +30,9 @@ function CareerDevelopment() {
     try {
       setLoading(true);
       setError("");
-      const result = await getCareerDevelopment();
+      const [result, interestResult] = await Promise.all([getCareerDevelopment(), getGeminiInterestOptions()]);
       setData(result);
+      setInterestOptions(interestResult.interests || []);
       setSelectedInterests(result.interests || []);
       setSelectedRole(result.selectedRole || "");
       setRolesPage(0);
@@ -82,13 +70,17 @@ function CareerDevelopment() {
     try {
       setSaving(true); setError(""); setMessage("");
       const result = await saveCareerPreferences(selectedInterests, selectedRole);
+      setGeneratingRoles(true);
+      await generateGeminiCareerRecommendations(result.interests || selectedInterests);
+      setGeneratingRoles(false);
       setSelectedInterests(result.interests || []);
-      setSelectedRole(result.selectedRole || "");
+      setSelectedRole("");
       setRolesPage(0);
-      setMessage("Your career interests and selected role have been saved.");
+      setMessage("Gemini generated career paths based on your selected interests and profile.");
       await load();
     } catch (err) {
-      setError(err?.response?.data?.message || "Could not save your career preferences.");
+      setGeneratingRoles(false);
+      setError(err?.response?.data?.message || "Could not save preferences or generate Gemini career recommendations.");
     } finally { setSaving(false); }
   };
 
