@@ -16,7 +16,7 @@ export const getSkillGapOverview = async () => {
     : [];
 
   const response = await API.post("/skill-gap/overview", { jobIds }, auth());
-  return { ...response.data, jobIds };
+  return { ...response.data, jobIds: response.data.analysedJobIds || jobIds };
 };
 
 export const getMissingSkillsRoadmap = async () => {
