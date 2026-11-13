@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight, BookOpen, Check, CheckCircle2, ChevronDown, ChevronRight,
-  Circle, Clock3, Code2, ExternalLink, GraduationCap, Layers3, ListChecks,
+  Clock3, Code2, ExternalLink, GraduationCap, Layers3, ListChecks,
   LoaderCircle, RefreshCw, Sparkles, Target, Trophy, Workflow
 } from "lucide-react";
 import {
@@ -85,8 +85,7 @@ function MissingSkillsRoadmap({ profile, missingSkills = [], jobIds = [] }) {
     setRoadmap((items) => items.map((item) => item._id === itemId ? { ...item, status } : item));
     setUpdating(itemId); setError("");
     try {
-      const result = await updateMissingSkillStatus(itemId, status);
-      setRoadmap((items) => items.map((item) => ({ ...item, ...(result.roadmap || []).find((saved) => saved._id === item._id) })));
+      await updateMissingSkillStatus(itemId, status);
     } catch (err) {
       setRoadmap(previous);
       setError(err?.response?.data?.message || "Could not save your learning progress.");
