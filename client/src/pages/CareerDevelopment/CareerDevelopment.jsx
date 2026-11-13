@@ -47,6 +47,7 @@ function CareerDevelopment() {
       setData(result);
       setSelectedInterests(result.interests || []);
       setSelectedRole(result.selectedRole || "");
+      setRolesPage(0);
     } catch (err) {
       setError(err?.response?.data?.message || "Unable to load Career Navigator. Please try again.");
     } finally {
@@ -62,7 +63,11 @@ function CareerDevelopment() {
   const completed = roadmap.filter((item) => item.status === "Completed").length;
   const progress = roadmap.length ? Math.round(completed / roadmap.length * 100) : 0;
   const selectedRoleData = roles.find((role) => role.title === selectedRole);
-  const recommendedRoles = useMemo(() => roles, [roles]);
+  const recommendedRoles = useMemo(() => {
+    if (!selectedInterests.length) return roles;
+    const selected = new Set(selectedInterests.map((item) => item.trim().toLowerCase()));
+    return roles.filter((role) => (role.interests || []).some((interest) => selected.has(interest.trim().toLowerCase())));
+  }, [roles, selectedInterests]);
   const rolesPerPage = 6;
   const rolesPageCount = Math.ceil(recommendedRoles.length / rolesPerPage);
   const visibleRoles = recommendedRoles.slice(rolesPage * rolesPerPage, (rolesPage + 1) * rolesPerPage);
@@ -79,6 +84,7 @@ function CareerDevelopment() {
       const result = await saveCareerPreferences(selectedInterests, selectedRole);
       setSelectedInterests(result.interests || []);
       setSelectedRole(result.selectedRole || "");
+      setRolesPage(0);
       setMessage("Your career interests and selected role have been saved.");
       await load();
     } catch (err) {
@@ -142,17 +148,6 @@ function CareerDevelopment() {
               </label>
             ))}
           </div>
-          {rolesPageCount > 1 && (
-            <div className="career-dev-pagination" aria-label="Career path pages">
-              <button type="button" onClick={() => setRolesPage((page) => Math.max(0, page - 1))} disabled={rolesPage === 0} aria-label="Previous career paths">
-                <ArrowLeft size={16} /> Previous
-              </button>
-              <span>Showing {rolesPage * rolesPerPage + 1}–{Math.min((rolesPage + 1) * rolesPerPage, recommendedRoles.length)} of {recommendedRoles.length} career paths <b>·</b> Page {rolesPage + 1} of {rolesPageCount}</span>
-              <button type="button" onClick={() => setRolesPage((page) => Math.min(rolesPageCount - 1, page + 1))} disabled={rolesPage >= rolesPageCount - 1} aria-label="Next career paths">
-                Next <ArrowRight size={16} />
-              </button>
-            </div>
-          )}
           <div className="career-dev-panel-actions">
             <small>Choose up to 12 interests. Recommendations update after you save. You can change them anytime.</small>
             <button onClick={handleSavePreferences} disabled={saving || selectedInterests.length > 12}>
@@ -162,7 +157,8 @@ function CareerDevelopment() {
         </section>
 
         <section className="career-dev-panel">
-          <div className="career-dev-section-title"><div><span>STEP 2</span><h2>Career paths recommended for you</h2><p>All available career paths are ranked using your skill match, selected interests and signals from a recent sample of JobPulse listings.</p></div><BriefcaseBusiness /></div>
+          <div className="career-dev-section-title"><div><span>STEP 2</span><h2>Career paths recommended for you</h2><p>{selectedInterests.length ? "Showing career paths connected to your selected interests, ranked by skill fit and job-demand signals." : "Choose and save interests above to see career paths relevant to what you want to explore."}</p></div><BriefcaseBusiness /></div>
+          {selectedInterests.length > 0 && recommendedRoles.length === 0 && <div className="career-dev-info">No catalogue roles are directly mapped to these interests yet. Try selecting a related interest to explore more paths.</div>}
           {!profileSkills.length && <div className="career-dev-info">Your profile has no saved skills yet. Add or extract skills in My Profile to make skill-fit recommendations more useful. You can still explore roles using your interests.</div>}
           <div className="career-dev-role-grid">
             {visibleRoles.map((role) => (
@@ -175,7 +171,7 @@ function CareerDevelopment() {
                   <span><Target size={14} /> {role.missingSkills.length} to develop</span>
                 </div>
                 <div className="career-role-demand"><TrendingUp size={14} /> Found in {role.demandCount} sampled listings</div>
-                <div className="career-role-score-breakdown">
+                <div className="career-dev-score-breakdown">
                   <span>Skills <b>{role.skillFit}%</b></span>
                   <span>Interests <b>{role.interestFit}%</b></span>
                   <span>Demand <b>{role.demandFit}%</b></span>
@@ -187,6 +183,17 @@ function CareerDevelopment() {
               </article>
             ))}
           </div>
+          {rolesPageCount > 1 && (
+            <div className="career-dev-pagination" aria-label="Career path pages">
+              <button type="button" onClick={() => setRolesPage((page) => Math.max(0, page - 1))} disabled={rolesPage === 0} aria-label="Previous career paths">
+                <ArrowLeft size={16} /> Previous
+              </button>
+              <span>Showing {rolesPage * rolesPerPage + 1}–{Math.min((rolesPage + 1) * rolesPerPage, recommendedRoles.length)} of {recommendedRoles.length} career paths <b>·</b> Page {rolesPage + 1} of {rolesPageCount}</span>
+              <button type="button" onClick={() => setRolesPage((page) => Math.min(rolesPageCount - 1, page + 1))} disabled={rolesPage >= rolesPageCount - 1} aria-label="Next career paths">
+                Next <ArrowRight size={16} />
+              </button>
+            </div>
+          )}
           <div className="career-dev-panel-actions">
             <label className="career-dev-select-label">Selected career role
               <select value={selectedRole} onChange={(event) => setSelectedRole(event.target.value)}>
