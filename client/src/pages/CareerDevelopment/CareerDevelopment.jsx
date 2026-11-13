@@ -204,8 +204,8 @@ function CareerDevelopment() {
               <div><h3>Skills you already have</h3><div className="career-dev-skill-chips">{selectedRoleData.matchedSkills.length ? selectedRoleData.matchedSkills.map((skill) => <span className="matched" key={skill}>{skill}</span>) : <small>No direct matches in your saved profile yet.</small>}</div></div>
               <div><h3>Skills to develop</h3><div className="career-dev-skill-chips">{selectedRoleData.missingSkills.map((skill) => <span className="missing" key={skill}>{skill}</span>)}</div></div>
             </div>
-            <div className="career-dev-guidance"><GraduationCap size={18} /><p>Start with the missing skills, build a practical project to demonstrate them, then update your profile and reassess your fit. This is guidance, not a hiring prediction.</p></div>
-            <button className="career-dev-primary" onClick={() => handleGenerate(selectedRole)} disabled={generating || !selectedRoleData.missingSkills.length}>
+            <div className="career-dev-guidance"><GraduationCap size={18} /><p>Start with the skills to develop, follow the learning resources and complete each practical task. If you already match the core skills, the roadmap focuses on deeper role-specific competencies. This is guidance, not a hiring prediction.</p></div>
+            <button className="career-dev-primary" onClick={() => handleGenerate(selectedRole)} disabled={generating}>
               {generating ? <LoaderCircle className="career-dev-spin" size={17} /> : <Map size={17} />} {generating ? "Building roadmap..." : "Generate learning roadmap"}
             </button>
           </section>
@@ -227,7 +227,7 @@ function CareerDevelopment() {
                       <div className="career-roadmap-meta"><span><BookOpen size={14} /> {item.topics.length} learning stages</span><span>{item.estimatedWeeks} estimated weeks</span></div>
                       <ol>{item.topics.map((topic, topicIndex) => <li key={topicIndex}>{topic}</li>)}</ol>
                       <div className="career-roadmap-task"><strong>Practice task</strong><p>{item.practiceTask}</p></div>
-                      {item.resource?.url && <a href={item.resource.url} target="_blank" rel="noreferrer">{item.resource.title} <ArrowRight size={13} /></a>}
+                      {item.resource?.url ? <a href={item.resource.url} target="_blank" rel="noreferrer">{item.resource.title || "Open learning resource"} <ArrowRight size={13} /></a> : <div className="career-roadmap-resource-note"><strong>Learning resource:</strong> {item.resource?.title || "Official documentation"} — search for the official documentation and verify the current learning material.</div>}
                     </div>
                   </article>
                 ))}
