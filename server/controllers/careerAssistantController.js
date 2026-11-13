@@ -59,7 +59,8 @@ const getConversation = async (req, res) => {
     const userId = userIdOf(req);
     if (!userId) return res.status(401).json({ success: false, message: "Please log in to use Career Assistant." });
     const conversation = await CareerAssistantConversation.findOne({ _id: req.params.id, userId }).select("title messages updatedAt").lean();
-    return res.json({ success: true, messages: publicMessages(conversation?.messages || []) });
+    if (!conversation) return res.status(404).json({ success: false, message: "Conversation not found." });
+    return res.json({ success: true, messages: publicMessages(conversation.messages || []) });
   } catch (error) {
     console.error("Load Career Assistant conversation:", error);
     return res.status(500).json({ success: false, message: "Unable to load your conversation." });
