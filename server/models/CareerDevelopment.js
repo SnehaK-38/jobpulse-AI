@@ -15,6 +15,8 @@ const roadmapItemSchema = new mongoose.Schema({
 const careerDevelopmentSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, unique: true, index: true },
   interests: { type: [String], default: [] },
+  generatedRoles: { type: [mongoose.Schema.Types.Mixed], default: [] },
+  generatedRolesAt: { type: Date, default: null },
   selectedRole: { type: String, default: "" },
   roadmap: { type: [roadmapItemSchema], default: [] },
   roadmapUpdatedAt: { type: Date, default: null },
