@@ -117,7 +117,7 @@ const updateRoadmapStatus = async (req, res) => {
     const saved = await CareerDevelopment.findOneAndUpdate(
       { userId, "roadmap._id": req.params.itemId },
       { $set: { "roadmap.$.status": status } },
-      { new: true, runValidators: true }
+      { returnDocument: "after", runValidators: true }
     ).lean();
     if (!saved) return res.status(404).json({ success: false, message: "Roadmap item not found." });
     return res.json({ success: true, roadmap: saved.roadmap });
