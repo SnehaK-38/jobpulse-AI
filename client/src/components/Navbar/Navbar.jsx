@@ -1,21 +1,13 @@
 import "./Navbar.css";
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { ChevronDown, LayoutDashboard, LogOut, Settings, UserRound, Target, Bookmark, Compass, Bot, Sun, Moon } from "lucide-react";
+import { ChevronDown, LayoutDashboard, LogOut, Settings, UserRound, Target, Bookmark, Compass, Bot } from "lucide-react";
 import { getProfile } from "../../services/profileService";
 
 function Navbar({ dashboardMode = false }) {
   const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
   const [profile, setProfile] = useState(null);
-  const [theme, setTheme] = useState(() => localStorage.getItem("jobpulse-theme") || "light");
-
-  useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
-    localStorage.setItem("jobpulse-theme", theme);
-  }, [theme]);
-
-  const toggleTheme = () => setTheme((current) => current === "light" ? "dark" : "light");
   const user = JSON.parse(localStorage.getItem("user"));
 
   useEffect(() => {
@@ -97,12 +89,6 @@ function Navbar({ dashboardMode = false }) {
             )}
           </li>
         )}
-        <li className="theme-toggle-item">
-          <button className="theme-toggle" type="button" onClick={toggleTheme} aria-label={theme === "light" ? "Switch to dark theme" : "Switch to light theme"} title={theme === "light" ? "Switch to dark theme" : "Switch to light theme"}>
-            {theme === "light" ? <Moon size={18} /> : <Sun size={18} />}
-            <span>{theme === "light" ? "Dark" : "Light"}</span>
-          </button>
-        </li>
       </ul>
     </nav>
   );
