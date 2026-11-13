@@ -112,7 +112,7 @@ const generateCareerRecommendations = async (req, res) => {
     if (!interests.length) return res.status(400).json({ success: false, message: "Select and save at least one career interest first." });
     const skills = unique([...(user.skills || []), ...(user.resumeSkills || [])]);
     const jobContext = jobs.slice(0, 80).map((j) => ({ title: j.title, skills: (j.skills || j.detectedJobSkills || []).slice(0, 12), description: clean(j.description).slice(0, 240) }));
-    const data = await askGemini("Act as a careful career advisor. Based on this user's selected interests, existing skills and sampled job-market examples, generate 18 to 30 relevant IT/technology career paths. Do not limit yourself to a fixed list. Include adjacent realistic roles, but do not invent job counts. Return JSON only with { roles: [{ title, industry, interests: string[], skills: string[], nextRoles: string[], summary }] }. Each role must have 5-12 concrete skills, 2-5 matching interests and 2-3 plausible next roles. Avoid duplicate/synonym roles. Prioritize the selected interests; every role must match at least one selected interest. Include a diverse mix of entry-level and specialist roles. User interests: " + JSON.stringify(interests) + ". User skills: " + JSON.stringify(skills) + ". Target role: " + clean(user.targetRole) + ". Preferred industry: " + clean(user.preferredIndustry) + ". Job listing sample (examples only, not a census): " + JSON.stringify(jobContext));
+    const data = await askGemini("Act as an independent occupational research and career advisor. Generate 18 to 30 realistic IT/technology career paths relevant to selected interests. Define each role's standard required competencies independently of the user's current skills. Do NOT copy, favour, or limit required skills to the user's existing skills. Include genuine role-specific technical skills, tools, methods and domain knowledge; avoid generic editor/tool names (such as VS Code) and generic skills unless essential. Each role must have 7-12 concrete role-specific skills, 2-5 relevant interest tags and 2-3 plausible progression roles. Return JSON only with { roles: [{ title, industry, interests: string[], skills: string[], nextRoles: string[], summary }] }. Every role must match at least one selected interest, but retain all relevant interest tags rather than filtering them to selected interests. Do not invent job counts. Avoid duplicate roles and include entry-level through specialist roles. User interests: " + JSON.stringify(interests) + ". User skills: " + JSON.stringify(skills) + ". Target role: " + clean(user.targetRole) + ". Preferred industry: " + clean(user.preferredIndustry) + ". Job listing sample (examples only, not a census): " + JSON.stringify(jobContext));
     const roles = (data.roles || []).map((r) => ({
       title: clean(r.title).slice(0, 100), industry: clean(r.industry).slice(0, 80),
       interests: unique(r.interests).filter((x) => interests.some((i) => norm(i) === norm(x))),
@@ -122,7 +122,7 @@ const generateCareerRecommendations = async (req, res) => {
     if (roles.length < 5) throw new Error("Gemini returned too few valid career paths. Please generate recommendations again.");
     const savedDoc = await CareerDevelopment.findOneAndUpdate(
       { userId }, { $set: { interests, generatedRoles: roles, generatedRolesAt: new Date(), selectedRole: "" } },
-      { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true }
+      { returnDocument: "after", upsert: true, runValidators: true, setDefaultsOnInsert: true }
     ).lean();
     return res.json({ success: true, roles: savedDoc.generatedRoles, generatedAt: savedDoc.generatedRolesAt });
   } catch (error) {
@@ -145,8 +145,9 @@ const generateGeminiRoadmap = async (req, res) => {
     if (!role) return res.status(400).json({ success: false, message: "Generate AI career recommendations and select one of those roles first." });
     const skills = unique([...(user?.skills || []), ...(user?.resumeSkills || [])]);
     const missing = role.skills.filter((skill) => !skills.some((s) => norm(s) === norm(skill)));
-    if (!missing.length) return res.status(400).json({ success: false, message: "Your profile already matches the listed skills for this role." });
-    const data = await askGemini("Create a practical beginner-to-intermediate learning roadmap for this career. Return JSON only: { items: [{ skill, priority, reason, estimatedWeeks, topics: string[], resourceTitle, resourceUrl, practiceTask }] }. Create one item for every missing skill provided, combine closely related skills only if necessary, 2-4 topics per item, 1-8 estimated weeks, priority High/Medium/Low. Prefer official documentation or reputable free learning resources; URLs must be plausible canonical links, never fabricate a URL if uncertain (use an empty resourceUrl). Give actionable project tasks. Role: " + role.title + ". Missing skills: " + JSON.stringify(missing) + ". Existing skills: " + JSON.stringify(skills) + ".");
+    const roadmapTargets = missing.length ? missing : role.skills;
+    const roadmapMode = missing.length ? "skill-gap development" : "career advancement: the user already matches the listed core skills, so suggest deeper intermediate-to-advanced competencies that extend them; do not simply repeat existing skills.";
+    const data = await askGemini("Create a practical personalised learning roadmap. Mode: " + roadmapMode + ". Return JSON only: { items: [{ skill, priority, reason, estimatedWeeks, topics: string[], resourceTitle, resourceUrl, practiceTask }] }. Create one item for every target skill provided, do not omit targets, 2-4 actionable topics per item, 1-8 estimated weeks, priority High/Medium/Low. Use official documentation URLs only when confident; otherwise use an empty resourceUrl and a useful resourceTitle. Never fabricate URLs. Give practical project tasks. Role: " + role.title + ". Target skills: " + JSON.stringify(roadmapTargets) + ". Existing skills: " + JSON.stringify(skills) + ".");
     const previousStatus = new Map((saved?.roadmap || []).map((item) => [norm(item.skill), item.status]));
     const items = (data.items || []).map((item, index) => ({
       skill: clean(item.skill), priority: ["High","Medium","Low"].includes(item.priority) ? item.priority : "Medium",
@@ -156,7 +157,7 @@ const generateGeminiRoadmap = async (req, res) => {
       resource: { title: clean(item.resourceTitle), url: /^https?:\/\//i.test(clean(item.resourceUrl)) ? clean(item.resourceUrl) : "" },
       practiceTask: clean(item.practiceTask), order: index + 1
     })).filter((item) => item.skill && item.topics.length);
-    if (items.length < Math.min(2, missing.length)) throw new Error("Gemini returned an incomplete learning roadmap. Please try again.");
+    if (items.length < Math.min(2, roadmapTargets.length)) throw new Error("Gemini returned an incomplete learning roadmap. Please try again.");
     const result = await CareerDevelopment.findOneAndUpdate(
       { userId }, { $set: { selectedRole: role.title, roadmap: items, roadmapUpdatedAt: new Date() } },
       { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true }
