@@ -25,6 +25,25 @@ const skillIsRequired = (skill, job) => {
   return new RegExp("(required|must[- ]have|mandatory|essential|proficient(?: in)?|experience with|experience in|knowledge of)[^.!?;\\n]{0,55}" + escaped, "i").test(text);
 };
 
+const getMissingSkillsRoadmap = async (req, res) => {
+  try {
+    const userId = userIdOf(req);
+    if (!userId) return res.status(401).json({ success: false, message: "Please log in to view your learning roadmap." });
+    const saved = await CareerDevelopment.findOne({ userId })
+      .select("missingSkillsRoadmap missingSkillsRoadmapRole missingSkillsRoadmapUpdatedAt")
+      .lean();
+    return res.json({
+      success: true,
+      targetRole: saved?.missingSkillsRoadmapRole || "",
+      roadmap: saved?.missingSkillsRoadmap || [],
+      updatedAt: saved?.missingSkillsRoadmapUpdatedAt || null,
+    });
+  } catch (error) {
+    console.error("Get Missing Skills Roadmap:", error);
+    return res.status(500).json({ success: false, message: "Unable to load your saved learning roadmap." });
+  }
+};
+
 const generateMissingSkillsRoadmap = async (req, res) => {
   try {
     const userId = userIdOf(req);
@@ -153,4 +172,4 @@ const updateMissingSkillStatus = async (req, res) => {
   }
 };
 
-module.exports = { generateMissingSkillsRoadmap, updateMissingSkillStatus };
+module.exports = { getMissingSkillsRoadmap, generateMissingSkillsRoadmap, updateMissingSkillStatus };
